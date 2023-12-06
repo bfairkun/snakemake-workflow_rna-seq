@@ -37,7 +37,7 @@ rule MultiQC:
 
 rule CountReadsPerSample:
     input:
-        expand("idxstats/{sample}.txt", sample=samples.index)
+        expand("idxstats/{sample}.txt", sample=samples.index.unique())
     output:
         "../output/QC/ReadCountsPerSamples.tsv"
     log:

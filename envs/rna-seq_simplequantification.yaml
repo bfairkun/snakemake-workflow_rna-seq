@@ -1,0 +1,21 @@
+name: rna-seq_simplequantification
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.9   # or 2.7
+  - bcftools
+  - bedtools
+  - biopython
+  - fastx_toolkit
+  - multiqc
+  - numpy
+  - pandas
+  - picard
+  - qualimap
+  - samtools
+  - scipy
+  - snakemake=6.1.0
+  - star=2.6.1b
+  - ucsc-bedgraphtobigwig
+  - ucsc-liftover

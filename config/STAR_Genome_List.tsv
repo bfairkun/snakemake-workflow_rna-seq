@@ -1,0 +1,2 @@
+GenomeName	FastaLink	GtfLink	Notes
+GRCh38_GencodeRelease44Comprehensive	https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/GRCh38.primary_assembly.genome.fa.gz	https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/gencode.v44.primary_assembly.annotation.gtf.gz

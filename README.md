@@ -8,6 +8,15 @@
 
 * Benjamin Fair (@bfairkun)
 
+## Summary
+
+### Description
+This workflow contains rules to download genome files, index genome and align reads with STAR, perform some basic QC, count splice junction reads (regtools) and gene reads (feature counts). Can handle different samples from different species, as defined in `config/STAR_Genome_List.tsv` and `config/samples.tsv`. Because this is often just the start of a RNA-seq analysis, this workflow might be best used as a module in a Snakemake workflow that further extends this work.
+
+### Dag
+Rulegraph dag:
+![dag](images/dag.png)
+
 ## Usage
 
 ### Step 1: Install workflow and dependencies

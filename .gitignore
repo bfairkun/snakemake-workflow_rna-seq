@@ -1,6 +1,8 @@
 *
 !config
 !config/*
+!images
+!images/*
 !snakemake_profiles
 !snakemake_profiles/**
 !scripts

@@ -1,0 +1,3 @@
+[submodule "scripts/leafcutter"]
+	path = scripts/leafcutter
+	url = git@github.com:davidaknowles/leafcutter.git

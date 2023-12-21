@@ -5,7 +5,8 @@ rule QualimapRnaseq:
         bam="Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
         bai="Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.bai"
     output:
-        "QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt"
+        results = "QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt",
+        outdir = directory("QC/QualimapRnaseq/{sample}")
     log:
         "logs/QualimapRnaseq/{sample}.log"
     conda:
@@ -17,7 +18,7 @@ rule QualimapRnaseq:
     shell:
         """
         unset DISPLAY
-        qualimap rnaseq -bam {input.bam} -gtf {input.gtf} {params.extra} --java-mem-size=12G -outdir QC/QualimapRnaseq/{wildcards.sample}/ &> {log}
+        qualimap rnaseq -bam {input.bam} -gtf {input.gtf} {params.extra} --java-mem-size=12G -outdir {output.outdir}/ &> {log}
         """
 
 rule MultiQC:
@@ -50,4 +51,18 @@ rule CountReadsPerSample:
         do
            printf "%s\\t%s\\n" $f $(awk -F'\\t' '$1~"^chr[1-9]" {{sum+=$3}} END {{print sum}}' $f) >> {output}
         done
+        """
+
+rule CatIdxStats_R:
+    input:
+        expand("idxstats/{sample}.txt", sample=samples.index.unique()[0:10])
+    output:
+        "test_script.tsv"
+    log:
+        "logs/CatIdxStats_R.log"
+    conda:
+        "../envs/r_2.yml"
+    shell:
+        """
+        Rscript scripts/CatIdxStats.R {output} {input} &> {log}
         """

@@ -21,7 +21,7 @@ rule MakeBigwigs_NormalizedToGenomewideCoverage:
     log:
         "logs/MakeBigwigs_unstranded/{sample}.log"
     resources:
-        mem = much_more_mem_after_first_attempt
+        mem_mb = much_more_mem_after_first_attempt
     shell:
         """
         ScaleFactor=$(bc <<< "scale=3;1000000000/$(grep '{wildcards.sample}' {input.NormFactorsFile} | awk 'NR==1 {{print $2}}')")

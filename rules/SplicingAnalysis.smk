@@ -36,13 +36,15 @@ rule annotate_juncfiles:
 
 rule ConcatJuncFilesAndKeepUniq:
     input:
-        ExpandAllSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc")
+        ExpandAllSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc"),
     output:
         "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.junc"
     log:
         "logs/ConcatJuncFilesAndKeepUniq/{GenomeName}.log"
     conda:
         "../envs/r_2.yml"
+    resources:
+        mem_mb = much_more_mem_after_first_attempt
     shell:
         """
         Rscript scripts/Collapse_Juncsfiles.R {output} {input} &> {log}
@@ -62,4 +64,86 @@ rule AnnotateConcatedUniqJuncFile_basic:
     shell:
         """
         (regtools junctions annotate {input.junc} {input.fa} {input.gtf} | gzip - > {output} ) &> {log}
+        """
+
+rule make_leafcutter_juncfile:
+    input:
+        ExpandAllSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc"),
+    output:
+        "SplicingAnalysis/leafcutter/{GenomeName}/juncfilelist.txt"
+    params:
+        SamplesToRemove = ""
+    run:
+        import os
+        if params.SamplesToRemove:
+            SamplesToRemove = open(params.SamplesToRemove, 'r').read().split('\n')
+        else:
+            SamplesToRemove=[]
+        with open(output[0], "w") as out:
+            for filepath in input:
+                samplename = os.path.basename(filepath).split(".junc")[0]
+                if samplename not in  SamplesToRemove:
+                    out.write(filepath + '\n')
+
+rule leafcutter_cluster:
+    input:
+        juncs = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc"),
+        juncfile_list = "SplicingAnalysis/leafcutter/{GenomeName}/juncfilelist.txt"
+    output:
+        outdir = directory("SplicingAnalysis/leafcutter/{GenomeName}/clustering/"),
+        counts = "SplicingAnalysis/leafcutter/{GenomeName}/clustering/leafcutter_perind.counts.gz",
+        numers = "SplicingAnalysis/leafcutter/{GenomeName}/clustering/leafcutter_perind_numers.counts.gz"
+    shadow: "shallow"
+    resources:
+        mem_mb = 16000
+    log:
+        "logs/leafcutter_cluster/{GenomeName}.log"
+    params:
+    shell:
+        """
+        python scripts/leafcutter/clustering/leafcutter_cluster_regtools.py -j {input.juncfile_list} {params} -r {output.outdir} &> {log}
+        """
+
+rule leafcutter_to_PSI:
+    input:
+        numers = "SplicingAnalysis/leafcutter/{GenomeName}/clustering/leafcutter_perind_numers.counts.gz"
+    output:
+        juncs = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/JuncCounts.bed"),
+        PSIByMax = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI.bed"),
+        PSI = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_ByMax.bed"),
+    log:
+        "logs/leafcutter_to_PSI/{GenomeName}.log"
+    conda:
+        "../envs/r_2.yml"
+    shell:
+        """
+        Rscript scripts/leafcutter_to_PSI.R {input.numers} {output.PSI} {output.PSIByMax} {output.juncs} &> {log}
+        """
+
+rule bgzip_PSI_bed:
+    input:
+        bed = "SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.bed",
+    output:
+        bed = "SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.sorted.bed.gz",
+        tbi  = "SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.sorted.bed.gz.tbi",
+    log:
+        "logs/bgzip_PSI_bed/{GenomeName}/{Metric}.log"
+    shell:
+        """
+        (bedtools sort -header -i {input.bed} | bgzip /dev/stdin -c > {output.bed}) &> {log}
+        (tabix -p bed {output.bed}) &>> {log}
+        """
+
+rule Get5ssSeqs:
+    """
+    Filtered out entries with N in sequence
+    """
+    input:
+        basic = "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.tsv.gz",
+        fa = config['GenomesPrefix'] + "{GenomeName}/Reference.fa",
+    output:
+        "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.DonorSeq.tsv"
+    shell:
+        """
+        zcat {input.basic} | awk -v OFS='\\t' -F'\\t' 'NR>1 {{print $1, $2, $3, $1"_"$2"_"$3"_"$6, ".", $6}}' | sort -u | awk -v OFS='\\t' -F'\\t'  '$6=="+" {{$2=$2-4; $3=$2+11; print $0}} $6=="-" {{$3=$3+3; $2=$3-11; print $0}}' | bedtools getfasta -tab -bed - -s -name -fi {input.fa} | grep -v 'N' > {output}
         """

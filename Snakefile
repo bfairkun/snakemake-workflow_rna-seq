@@ -24,8 +24,8 @@ rule all:
         expand("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",sample=samples.index),
         expand("SplicingAnalysis/juncfiles/{sample}.junccounts.tsv.gz", sample=samples.index),
         "../output/QC/ReadCountsPerSamples.tsv",
-        expand("bigwigs/unstranded/{sample}.bw", sample=samples.index),
+        # expand("bigwigs/unstranded/{sample}.bw", sample=samples.index),
         "SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.tsv.gz",
         "Multiqc/multiqc_report.html",
-        "featureCounts/GRCh38_GencodeRelease44Comprehensive/Counts.txt"
+        expand("featureCounts/GRCh38_GencodeRelease44Comprehensive/{Strandedness}.Counts.txt", Strandedness=samples['Strandedness'].unique())
 

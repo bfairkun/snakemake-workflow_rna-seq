@@ -44,6 +44,7 @@ rule STAR_Align:
         R1 = "FastqFastp/{sample}.R1.fastq.gz",
         R2 = "FastqFastp/{sample}.R2.fastq.gz"
     output:
+        outdir = directory("Alignments/STAR_Align/{sample}"),
         bam = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
         align_log = "Alignments/STAR_Align/{sample}/Log.final.out"
     threads: 8
@@ -53,11 +54,12 @@ rule STAR_Align:
         readMapNumber = -1,
         ENCODE_params = "--outFilterType BySJout --outFilterMultimapNmax 20  --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000",
     resources:
-        cpus_per_node = 9,
-        mem = 48000,
+        tasks = 9,
+        mem_mb = 48000,
+        # N = 1
     shell:
         """
-        STAR --readMapNumber {params.readMapNumber} --outFileNamePrefix Alignments/STAR_Align/{wildcards.sample}/ --genomeDir {input.index}/ --readFilesIn {input.R1} {input.R2}  --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --runThreadN {threads} --outSAMmultNmax 1 --limitBAMsortRAM 8000000000 {params.ENCODE_params} --outSAMstrandField intronMotif  &> {log}
+        STAR --readMapNumber {params.readMapNumber} --outFileNamePrefix {output.outdir}/ --genomeDir {input.index}/ --readFilesIn {input.R1} {input.R2}  --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --runThreadN {threads} --outSAMmultNmax 1 --limitBAMsortRAM 8000000000 {params.ENCODE_params} --outSAMstrandField intronMotif  &> {log}
         """
 
 rule indexBam:

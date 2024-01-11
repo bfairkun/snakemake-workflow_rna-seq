@@ -28,7 +28,7 @@ rule fastp:
         json = "FastqFastp/{sample}.fastp.json"
     params:
     resources:
-        mem_mb = 8000
+        mem_mb = GetMemForSuccessiveAttempts(8000, 24000)
     log:
         "logs/fastp/{sample}.log"
     conda:
@@ -77,7 +77,7 @@ rule idxstats:
         bam = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
         bai = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.bai",
     output:
-        "idxstats/{sample}.txt"
+        "idxstats/{sample}.idxstats.txt"
     shell:
         """
         samtools idxstats {input.bam} > {output}

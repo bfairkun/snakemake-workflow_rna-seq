@@ -9,7 +9,8 @@ include: "rules/common.smk"
 
 wildcard_constraints:
     GenomeName = "|".join(STAR_genomes.index),
-    sample = "|".join(samples.index)
+    sample = "|".join(samples.index),
+    Strandedness = "|".join(["U", "FR", "RF"])
 localrules: DownloadFastaAndGtf, CopyFastq, MultiQC
 
 include: "rules/PreprocessAndAlign.smk"
@@ -24,8 +25,10 @@ rule all:
         expand("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",sample=samples.index),
         expand("SplicingAnalysis/juncfiles/{sample}.junccounts.tsv.gz", sample=samples.index),
         "../output/QC/ReadCountsPerSamples.tsv",
-        # expand("bigwigs/unstranded/{sample}.bw", sample=samples.index),
+        expand("bigwigs/unstranded/{sample}.bw", sample=samples.index),
         "SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.tsv.gz",
-        "Multiqc/multiqc_report.html",
+        "Multiqc",
+        "featureCounts/GRCh38_GencodeRelease44Comprehensive/AllSamplesUnstrandedCounting.Counts.txt",
+        config['GenomesPrefix'] + "GRCh38_GencodeRelease44Comprehensive/Reference.Transcripts.colored.bed.gz",
         expand("featureCounts/GRCh38_GencodeRelease44Comprehensive/{Strandedness}.Counts.txt", Strandedness=samples['Strandedness'].unique())
 

@@ -39,6 +39,54 @@ rule indexHg38Ref:
         samtools faidx {input.fa}
         """
 
+rule gtf_to_bed12:
+    """
+    This shell command works with Gencode formatted gtf, haven't looked at
+    Ensembl gtfs
+    """
+    input:
+        gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.gtf"
+    output:
+        bed = temp(config['GenomesPrefix'] + "{GenomeName}/Reference.bed.gz"),
+        tbi = temp(config['GenomesPrefix'] + "{GenomeName}/Reference.bed.gz.tbi")
+    conda:
+        "../envs/bedparse.yml"
+    shell:
+        """
+        bedparse gtf2bed {input.gtf} --extraFields gene_id,transcript_id,gene_type,gene_name,transcript_type,transcript_support_level,tag,transcript_name | awk -F'\\t' -v OFS='\\t' '{{$4=$NF; print $0}}' | bedtools sort -i - | bgzip /dev/stdin -c > {output.bed}
+        tabix -p bed {output.bed}
+        """
+
+rule colorize_gtfbed:
+    """
+    Only tested on human Gencode v44
+    """
+    input:
+        bed = config['GenomesPrefix'] + "{GenomeName}/Reference.bed.gz",
+    output:
+        bed = temp(config['GenomesPrefix'] + "{GenomeName}/Reference.colored.bed"),
+        colorkey = config['GenomesPrefix'] + "{GenomeName}/Reference.colored.ColorsKey.png"
+    conda:
+        "../envs/r_2.yml"
+    log:
+        "logs/colorize_gtfbed/{GenomeName}.log"
+    shell:
+        """
+        Rscript scripts/ColorTranscriptsInGtfBed.R {input.bed} {output.bed} {output.colorkey} &> {log}
+        """
+
+rule index_colored_bed12:
+    input:
+        bed = config['GenomesPrefix'] + "{GenomeName}/Reference.colored.bed",
+    output:
+        bed = config['GenomesPrefix'] + "{GenomeName}/Reference.Transcripts.colored.bed.gz",
+        tbi = config['GenomesPrefix'] + "{GenomeName}/Reference.Transcripts.colored.bed.gz.tbi"
+    shell:
+        """
+        bedtools sort -i {input.bed} | bgzip /dev/stdin -c > {output.bed}
+        tabix -p bed {output.bed}
+        """
+
 rule STAR_make_index:
     """
     did not work on bigmem2. Never figured out why (the log file didn't

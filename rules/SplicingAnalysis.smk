@@ -41,13 +41,11 @@ rule ConcatJuncFilesAndKeepUniq:
         "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.junc"
     log:
         "logs/ConcatJuncFilesAndKeepUniq/{GenomeName}.log"
-    conda:
-        "../envs/r_2.yml"
     resources:
-        mem_mb = much_more_mem_after_first_attempt
+        mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
     shell:
         """
-        Rscript scripts/Collapse_Juncsfiles.R {output} {input} &> {log}
+        (awk '{{ split($11, blockSizes, ","); JuncStart=$2+blockSizes[1]; JuncEnd=$3-blockSizes[2]; print $0, JuncStart, JuncEnd }}' {input} | sort -k1,1 -k6,6 -k13,13n -k14,14n -u | cut -f 1-12 | bedtools sort -i - >> {output}) &> {log}
         """
 
 rule AnnotateConcatedUniqJuncFile_basic:

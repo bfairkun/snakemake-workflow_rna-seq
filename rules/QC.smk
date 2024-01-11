@@ -12,7 +12,8 @@ rule QualimapRnaseq:
     conda:
         "../envs/qualimap.yml"
     params:
-        extra = "-p strand-specific-reverse"
+        # extra = "-p strand-specific-reverse"
+        extra = ""
     resources:
         mem_mb = 16000
     shell:
@@ -23,22 +24,24 @@ rule QualimapRnaseq:
 
 rule MultiQC:
     input:
-        expand("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam", sample= samples.index.unique()),
+        expand("Alignments/STAR_Align/{sample}/Log.final.out", sample= samples.index.unique()),
         expand("QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt", sample=samples.index.unique()),
-        expand("FastqFastp/{sample}.fastp.json", sample=samples.index.unique())
+        expand("FastqFastp/{sample}.fastp.json", sample=samples.index.unique()),
+        expand("featureCounts/{GenomeName}/{Strandedness}.Counts.txt.summary", GenomeName=samples['STARGenomeName'].unique(), Strandedness=samples['Strandedness'].unique()),
+        expand("idxstats/{sample}.idxstats.txt", sample=samples.index.unique())
     log: "logs/Multiqc.log"
     output:
-        "Multiqc/multiqc_report.html"
+        directory("Multiqc")
     shell:
         """
-        multiqc -f -o Multiqc/ Alignments/STAR_Align/ QC/QualimapRnaseq/ FastqFastp/ &> {log}
+        multiqc -f -o {output}/ {input} &> {log}
         """
 
 
 
 rule CountReadsPerSample:
     input:
-        expand("idxstats/{sample}.txt", sample=samples.index.unique())
+        expand("idxstats/{sample}.idxstats.txt", sample=samples.index.unique())
     output:
         "../output/QC/ReadCountsPerSamples.tsv"
     log:
@@ -55,7 +58,7 @@ rule CountReadsPerSample:
 
 rule CatIdxStats_R:
     input:
-        expand("idxstats/{sample}.txt", sample=samples.index.unique()[0:10])
+        expand("idxstats/{sample}.idxstats.txt", sample=samples.index.unique()[0:10])
     output:
         "test_script.tsv"
     log:

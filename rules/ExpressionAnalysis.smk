@@ -5,13 +5,13 @@ rule featurecounts:
         bai = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.bai"),
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf",
     output:
-        "featureCounts/{GenomeName}/{Strandedness}.Counts.txt"
+        counts = "featureCounts/{GenomeName}/{Strandedness}.Counts.txt",
+        summary = "featureCounts/{GenomeName}/{Strandedness}.Counts.txt.summary",
     threads:
         8
     resources:
         mem_mb = 12000,
         tasks = 9,
-        # cpus_per_node = 9,
     log:
         "logs/featureCounts/{GenomeName}.{Strandedness}.log"
     params:
@@ -19,5 +19,26 @@ rule featurecounts:
         extra = ""
     shell:
         """
-        featureCounts {params.strand} {params.extra} -T {threads} --ignoreDup --primary -a {input.gtf} -o {output} {input.bam} &> {log}
+        featureCounts {params.strand} {params.extra} -T {threads} --ignoreDup --primary -a {input.gtf} -o {output.counts} {input.bam} &> {log}
         """
+
+use rule featurecounts as featurecounts_allUnstranded with:
+    input:
+        bam = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam"),
+        bai = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.bai"),
+        gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf",
+    output:
+        counts = "featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt",
+        summary = "featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt.summary",
+    threads:
+        8
+    resources:
+        mem_mb = 12000,
+        tasks = 9,
+    log:
+        "logs/featureCounts/{GenomeName}.AllUnstranded.log"
+    params:
+        strand = '-s 0',
+        extra = ""
+
+# rule GetGeneNames_bioMart:

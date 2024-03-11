@@ -93,10 +93,11 @@ rule leafcutter_cluster:
         numers = "SplicingAnalysis/leafcutter/{GenomeName}/clustering/leafcutter_perind_numers.counts.gz"
     shadow: "shallow"
     resources:
-        mem_mb = 16000
+        mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
     log:
         "logs/leafcutter_cluster/{GenomeName}.log"
     params:
+        "-p 0.0001"
     shell:
         """
         python scripts/leafcutter/clustering/leafcutter_cluster_regtools.py -j {input.juncfile_list} {params} -r {output.outdir} &> {log}
@@ -111,6 +112,8 @@ rule leafcutter_to_PSI:
         PSI = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_ByMax.bed"),
     log:
         "logs/leafcutter_to_PSI/{GenomeName}.log"
+    resources:
+        mem_mb = GetMemForSuccessiveAttempts(24000, 54000)
     conda:
         "../envs/r_2.yml"
     shell:
@@ -126,6 +129,8 @@ rule bgzip_PSI_bed:
         tbi  = "SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.sorted.bed.gz.tbi",
     log:
         "logs/bgzip_PSI_bed/{GenomeName}/{Metric}.log"
+    resources:
+        mem_mb = GetMemForSuccessiveAttempts(24000, 54000)
     shell:
         """
         (bedtools sort -header -i {input.bed} | bgzip /dev/stdin -c > {output.bed}) &> {log}

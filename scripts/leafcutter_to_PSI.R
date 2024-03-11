@@ -2,7 +2,7 @@
 
 if(interactive()){
   args <- scan(text=
-                 "../code/SplicingAnalysis/leafcutter_all_samples/leafcutter_perind_numers.counts.gz ../code/scratch/NormalizedPsiTables.AllSamples", what='character')
+                 "rna-seq/SplicingAnalysis/leafcutter/GRCh38_GencodeRelease44Comprehensive/clustering/leafcutter_perind_numers.counts.gz rna-seq/SplicingAnalysis/leafcutter/GRCh38_GencodeRelease44Comprehensive/juncTableBeds/PSI_ByMax.bed rna-seq/SplicingAnalysis/leafcutter/GRCh38_GencodeRelease44Comprehensive/juncTableBeds/PSI.bed rna-seq/SplicingAnalysis/leafcutter/GRCh38_GencodeRelease44Comprehensive/juncTableBeds/JuncCounts.bed", what='character')
 } else{
   args <- commandArgs(trailingOnly=TRUE)
 }

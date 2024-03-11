@@ -24,6 +24,7 @@ rule all:
     input:
         expand("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",sample=samples.index),
         expand("SplicingAnalysis/juncfiles/{sample}.junccounts.tsv.gz", sample=samples.index),
+        expand("FastqFastp/{sample}.fastp.html", sample=samples.index),
         "../output/QC/ReadCountsPerSamples.tsv",
         expand("bigwigs/unstranded/{sample}.bw", sample=samples.index),
         "SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.tsv.gz",

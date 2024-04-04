@@ -9,6 +9,8 @@ rule featurecounts:
         summary = "featureCounts/{GenomeName}/{Strandedness}.Counts.txt.summary",
     threads:
         8
+    conda:
+        "../envs/subread_featureCounts.yml"
     resources:
         mem_mb = 12000,
         tasks = 9,

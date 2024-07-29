@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import os
 
 
@@ -7,8 +8,10 @@ try:
     STAR_genomes = pd.read_csv(config["STAR_genomes"],sep='\t', index_col=0)
 except (NameError, KeyError) as NameOrKeyError:
     samples = pd.read_csv("config/samples.tsv",sep='\t', index_col=0)
-    STAR_genomes = pd.read_csv("module_workflows/snakemake-workflow_rna-seq/config/STAR_Genome_List.tsv",sep='\t', index_col=0)
+    STAR_genomes = pd.read_csv("config/STAR_Genome_List.tsv",sep='\t', index_col=0)
 
+samples_SingleEnd = samples[samples['R2'].isna()].index
+samples_PairedEnd = samples[~samples['R2'].isna()].index
 
 # # How to access values in samples.tsv
 

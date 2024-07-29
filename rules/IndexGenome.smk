@@ -2,11 +2,9 @@ rule DownloadFastaAndGtf:
     output:
         fa = config['GenomesPrefix'] + "{GenomeName}/Reference.fa",
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.gtf"
-        # fa = "{{GenomesPrefix}}{GenomeName}/Reference.fa",
-        # gtf = "{{GenomesPrefix}}{GenomeName}/Reference.gtf"
     params:
-        fa_link = lambda wildcards: STAR_genomes.loc['GRCh38_GencodeRelease44Comprehensive']['FastaLink'],
-        gtf_link = lambda wildcards: STAR_genomes.loc['GRCh38_GencodeRelease44Comprehensive']['GtfLink'],
+        fa_link = lambda wildcards: STAR_genomes.loc[wildcards.GenomeName]['FastaLink'],
+        gtf_link = lambda wildcards: STAR_genomes.loc[wildcards.GenomeName]['GtfLink'],
     shell:
         """
         wget -O- {params.fa_link} | zcat > {output.fa}

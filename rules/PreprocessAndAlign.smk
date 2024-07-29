@@ -8,10 +8,27 @@ rule CopyFastq:
     output:
         R1 = temp("Fastq/{sample}.R1.fastq.gz"),
         R2 = temp("Fastq/{sample}.R2.fastq.gz"),
+    wildcard_constraints:
+        sample = "|".join(samples_PairedEnd)
     shell:
         """
         cat {input.R1} > {output.R1}
         cat {input.R2} > {output.R2}
+        """
+
+rule CopyFastq_SE:
+    """
+    Useful for when a single sample is spread across multiple fastq, or when the original fastq is in long term storage cds
+    """
+    input:
+        R1 = lambda wildcards: samples.loc[wildcards.sample]['R1'],
+    output:
+        R1 = temp("Fastq/{sample}.R1.fastq.gz"),
+    wildcard_constraints:
+        sample = "|".join(samples_SingleEnd)
+    shell:
+        """
+        cat {input.R1} > {output.R1}
         """
 
 rule fastp:
@@ -29,6 +46,8 @@ rule fastp:
     params:
     resources:
         mem_mb = GetMemForSuccessiveAttempts(8000, 24000)
+    wildcard_constraints:
+        sample = "|".join(samples_PairedEnd)
     log:
         "logs/fastp/{sample}.log"
     conda:
@@ -38,11 +57,35 @@ rule fastp:
         fastp -i {input.R1} -I {input.R2}  -o {output.R1} -O {output.R2} --html {output.html} --json {output.json} &> {log}
         """
 
+rule fastp_SE:
+    """
+    clips adapters, can handle UMIs
+    """
+    input:
+        R1 = "Fastq/{sample}.R1.fastq.gz",
+    output:
+        R1 = "FastqFastp/{sample}.R1.fastq.gz",
+        html = "FastqFastp/{sample}.fastp.html",
+        json = "FastqFastp/{sample}.fastp.json"
+    params:
+    resources:
+        mem_mb = GetMemForSuccessiveAttempts(8000, 24000)
+    wildcard_constraints:
+        sample = "|".join(samples_SingleEnd)
+    log:
+        "logs/fastp/{sample}.log"
+    conda:
+        "../envs/fastp.yml"
+    shell:
+        """
+        fastp -i {input.R1} -o {output.R1} --html {output.html} --json {output.json} &> {log}
+        """
+
 rule STAR_Align:
     input:
         index = lambda wildcards: config['GenomesPrefix'] + samples.loc[wildcards.sample]['STARGenomeName'] + "/STARIndex",
         R1 = "FastqFastp/{sample}.R1.fastq.gz",
-        R2 = "FastqFastp/{sample}.R2.fastq.gz"
+        R2 = lambda wildcards: "FastqFastp/{sample}.R2.fastq.gz" if wildcards.sample in samples_PairedEnd else []
     output:
         outdir = directory("Alignments/STAR_Align/{sample}"),
         bam = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",

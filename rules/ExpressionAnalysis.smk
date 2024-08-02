@@ -2,7 +2,7 @@
 rule featurecounts:
     input:
         bam = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam"),
-        bai = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.bai"),
+        index = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf",
     output:
         counts = "featureCounts/{GenomeName}/{Strandedness}.Counts.txt",
@@ -27,7 +27,7 @@ rule featurecounts:
 use rule featurecounts as featurecounts_allUnstranded with:
     input:
         bam = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam"),
-        bai = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.bai"),
+        index = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf",
     output:
         counts = "featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt",

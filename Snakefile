@@ -11,7 +11,7 @@ wildcard_constraints:
     GenomeName = "|".join(STAR_genomes.index),
     sample = "|".join(samples.index),
     Strandedness = "|".join(["U", "FR", "RF"])
-localrules: DownloadFastaAndGtf, CopyFastq, MultiQC
+localrules: DownloadFastaAndGtf, CopyFastq, MultiQC, CopyFastq_SE, STAR_make_index
 
 include: "rules/PreprocessAndAlign.smk"
 include: "rules/IndexGenome.smk"
@@ -24,12 +24,16 @@ rule all:
     input:
         expand("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",sample=samples.index),
         expand("SplicingAnalysis/juncfiles/{sample}.junccounts.tsv.gz", sample=samples.index),
-        expand("FastqFastp/{sample}.fastp.html", sample=samples.index),
+        # expand("FastqFastp/{sample}.fastp.html", sample=samples.index),
         "../output/QC/ReadCountsPerSamples.tsv",
-        expand("bigwigs/unstranded/{sample}.bw", sample=samples.index),
-        "SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.tsv.gz",
-        "Multiqc",
-        "featureCounts/GRCh38_GencodeRelease44Comprehensive/AllSamplesUnstrandedCounting.Counts.txt",
-        config['GenomesPrefix'] + "GRCh38_GencodeRelease44Comprehensive/Reference.Transcripts.colored.bed.gz",
-        expand("featureCounts/GRCh38_GencodeRelease44Comprehensive/{Strandedness}.Counts.txt", Strandedness=samples['Strandedness'].unique())
+        # expand("bigwigs/unstranded/{sample}.bw", sample=samples.index),
+        #
+        # "SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.tsv.gz",
+        # "Multiqc",
+        expand(config['GenomesPrefix'] + "{GenomeName}/STARIndex", GenomeName = samples['STARGenomeName'].unique()),
+        expand("featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt", GenomeName = samples['STARGenomeName'].unique()),
+        expand("SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.tsv.gz", GenomeName = samples['STARGenomeName'].unique()),
+        # expand("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.sorted.bed.gz", GenomeName = samples['STARGenomeName'].unique(), Metric = ["JuncCounts", "PSI", "PSIByMax"]),
+        # config['GenomesPrefix'] + "GRCh38_GencodeRelease44Comprehensive/Reference.Transcripts.colored.bed.gz",
+        # expand("featureCounts/GRCh38_GencodeRelease44Comprehensive/{Strandedness}.Counts.txt", Strandedness=samples['Strandedness'].unique())
 

@@ -23,11 +23,11 @@ rule GetBasicGtf:
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf"
     shell:
         """
-        awk '/^##/ || /tag "basic"/ || $3=="gene"' {input.gtf} > {output.gtf}
+        awk '/^#/ || /tag "basic"/ || /transcript_biotype "mRNA"/ || /transcript_biotype "protein_coding"/ ||$3=="gene"' {input.gtf} > {output.gtf}
         """
 
 
-rule indexHg38Ref:
+rule faidxGenome:
     input:
         fa = config['GenomesPrefix'] + "{GenomeName}/Reference.fa",
     output:
@@ -102,7 +102,7 @@ rule STAR_make_index:
     threads: 4
     resources:
         mem = "52000",
-        # partition = "bigmem2",
+        slurm_partition = "bigmem2",
         ntasks = 5
     shell:
         """
@@ -113,3 +113,7 @@ rule STAR_make_index:
 rule Gather_STAR_Indexes:
     input:
         expand(config['GenomesPrefix'] + "{GenomeName}/STARIndex", GenomeName = STAR_genomes.index)
+
+rule Gather_used_STAR_Indexes:
+    input:
+        expand(config['GenomesPrefix'] + "{GenomeName}/STARIndex", GenomeName = samples['STARGenomeName'].unique())

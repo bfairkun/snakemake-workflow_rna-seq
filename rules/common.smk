@@ -34,6 +34,18 @@ def ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards(FormattedStri
         return expand(FormattedString, sample=samples.loc[(samples['STARGenomeName']==wildcards.GenomeName) & (samples['Strandedness']==wildcards.Strandedness)].index.unique())
     return InputFunctionToReturn
 
+def GetIndexingParamsFromGenomeName(wildcards):
+    if STAR_genomes.loc[wildcards.GenomeName]['ChromLargerThan512Mbp'] == 'T':
+        return '--csi'
+    else:
+        return ''
+
+def GetIndexingParamsFromSampleName(wildcards):
+    GenomeName = samples.loc[wildcards.sample]['STARGenomeName']
+    if STAR_genomes.loc[GenomeName]['ChromLargerThan512Mbp'] == 'T':
+        return '--csi'
+    else:
+        return ''
 
 def GetMemForSuccessiveAttempts(*args, max_mb=48000):
     def ReturnMemMb(wildcards, attempt):

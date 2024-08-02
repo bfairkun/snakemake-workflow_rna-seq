@@ -96,29 +96,33 @@ rule STAR_Align:
         GetSTARIndexDir = "/project2/yangili1/bjf79/ChromatinSplicingQTLs/code/ReferenceGenome/STARIndex/",
         readMapNumber = -1,
         ENCODE_params = "--outFilterType BySJout --outFilterMultimapNmax 20  --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000",
+        extra = "--twopassMode Basic"
     resources:
         tasks = 9,
         mem_mb = 48000,
         # N = 1
     shell:
         """
-        STAR --readMapNumber {params.readMapNumber} --outFileNamePrefix {output.outdir}/ --genomeDir {input.index}/ --readFilesIn {input.R1} {input.R2}  --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --runThreadN {threads} --outSAMmultNmax 1 --limitBAMsortRAM 8000000000 {params.ENCODE_params} --outSAMstrandField intronMotif  &> {log}
+        STAR --readMapNumber {params.readMapNumber} --outFileNamePrefix {output.outdir}/ --genomeDir {input.index}/ --readFilesIn {input.R1} {input.R2}  --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --runThreadN {threads} --outSAMmultNmax 1 --limitBAMsortRAM 8000000000 {params.ENCODE_params} --outSAMstrandField intronMotif {params.extra} &> {log}
         """
+
 
 rule indexBam:
     input:
         bam = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
     log:
         "logs/indexBam/{sample}.log"
+    params:
+        GetIndexingParamsFromSampleName
     output:
-        bai = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.bai",
-    shell: "samtools index {input} &> {log}"
+        index = touch("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
+    shell: "samtools index {params} {input} &> {log} && touch {output.index}"
 
 
 rule idxstats:
     input:
         bam = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
-        bai = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.bai",
+        index = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
     output:
         "idxstats/{sample}.idxstats.txt"
     shell:

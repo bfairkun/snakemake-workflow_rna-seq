@@ -1,7 +1,7 @@
 rule ExtractJuncs:
     input:
         bam = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
-        bai = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.bai",
+        index = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
     output:
         "SplicingAnalysis/juncfiles/{sample}.junc",
     params:
@@ -17,6 +17,10 @@ rule ExtractJuncs:
 
 
 rule annotate_juncfiles:
+    """
+    this command breaks when gtf has trailing spaces, like in some NCBI gtfs
+    https://github.com/griffithlab/regtools/issues/92
+    """
     input:
         fa = FillGenomeNameInFormattedString(config['GenomesPrefix'] + "{GenomeName}/Reference.fa"),
         fai = FillGenomeNameInFormattedString(config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai"),
@@ -28,6 +32,8 @@ rule annotate_juncfiles:
         "logs/annotate_juncfiles/{sample}.log"
     conda:
         "../envs/regtools.yml"
+    resources:
+        mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
     shell:
         """
         (regtools junctions annotate {input.juncs} {input.fa} {input.gtf} | awk -F'\\t' -v OFS='\\t' 'NR>1 {{$4=$1"_"$2"_"$3"_"$6; print $4, $5}}' | gzip - > {output.counts} ) &> {log}
@@ -126,15 +132,17 @@ rule bgzip_PSI_bed:
         bed = "SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.bed",
     output:
         bed = "SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.sorted.bed.gz",
-        tbi  = "SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.sorted.bed.gz.tbi",
+        index  = touch("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.sorted.bed.gz.indexing_done"),
     log:
         "logs/bgzip_PSI_bed/{GenomeName}/{Metric}.log"
     resources:
         mem_mb = GetMemForSuccessiveAttempts(24000, 54000)
+    params:
+        GetIndexingParamsFromGenomeName
     shell:
         """
         (bedtools sort -header -i {input.bed} | bgzip /dev/stdin -c > {output.bed}) &> {log}
-        (tabix -p bed {output.bed}) &>> {log}
+        (tabix {params} -p bed {output.bed}) &>> {log} && touch {output.index}
         """
 
 rule Get5ssSeqs:

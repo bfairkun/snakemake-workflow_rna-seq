@@ -3,7 +3,7 @@ rule QualimapRnaseq:
     input:
         gtf = FillGenomeNameInFormattedString(config['GenomesPrefix'] + "{GenomeName}/Reference.gtf"),
         bam="Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
-        bai="Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.bai"
+        index="Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"
     output:
         results = "QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt",
         outdir = directory("QC/QualimapRnaseq/{sample}")

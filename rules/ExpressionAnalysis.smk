@@ -18,7 +18,7 @@ rule featurecounts:
         "logs/featureCounts/{GenomeName}.{Strandedness}.log"
     params:
         strand = lambda wildcards: {'FR':'-s 1', 'U':'-s 0', 'RF':'-s 2'}[wildcards.Strandedness],
-        extra = ""
+        extra = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads
     shell:
         """
         featureCounts {params.strand} {params.extra} -T {threads} --ignoreDup --primary -a {input.gtf} -o {output.counts} {input.bam} &> {log}
@@ -41,6 +41,6 @@ use rule featurecounts as featurecounts_allUnstranded with:
         "logs/featureCounts/{GenomeName}.AllUnstranded.log"
     params:
         strand = '-s 0',
-        extra = ""
+        extra = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads
 
 # rule GetGeneNames_bioMart:

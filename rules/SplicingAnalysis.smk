@@ -44,19 +44,19 @@ rule ConcatJuncFilesAndKeepUniq:
     input:
         ExpandAllSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc"),
     output:
-        "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.junc"
+        "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.junc.gz"
     log:
         "logs/ConcatJuncFilesAndKeepUniq/{GenomeName}.log"
     resources:
         mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
     shell:
         """
-        (awk '{{ split($11, blockSizes, ","); JuncStart=$2+blockSizes[1]; JuncEnd=$3-blockSizes[2]; print $0, JuncStart, JuncEnd }}' {input} | sort -k1,1 -k6,6 -k13,13n -k14,14n -u | cut -f 1-12 | bedtools sort -i - >> {output}) &> {log}
+        (awk -v OFS='\\t' '{{ split($11, blockSizes, ","); JuncStart=$2+blockSizes[1]; JuncEnd=$3-blockSizes[2]; print $0, JuncStart, JuncEnd }}' {input} | sort -k1,1 -k6,6 -k13,13n -k14,14n | python scripts/AggregateSortedCattedJuncBeds.py | awk -v OFS='\\t' '{{print $1,$2,$3,$1"_"$2"_"$3"_"$6,$15,$6,$7,$8,$9,$10,$11,$12}}' | bedtools sort -i - | bgzip -c /dev/stdin  > {output}) &> {log}
         """
 
 rule AnnotateConcatedUniqJuncFile_basic:
     input:
-        junc = "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.junc",
+        junc = "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.junc.gz",
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf",
         fa = config['GenomesPrefix'] + "{GenomeName}/Reference.fa"
     output:
@@ -106,7 +106,7 @@ rule leafcutter_cluster:
         "-p 0.0001"
     shell:
         """
-        python scripts/leafcutter/clustering/leafcutter_cluster_regtools.py -j {input.juncfile_list} {params} -r {output.outdir} &> {log}
+        python scripts/leafcutter/clustering/leafcutter_cluster_regtools.py -j {input.juncfile_list} {params} -r {output.outdir} -k True &> {log}
         """
 
 rule leafcutter_to_PSI:

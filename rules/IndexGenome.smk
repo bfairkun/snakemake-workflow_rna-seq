@@ -14,8 +14,10 @@ rule DownloadFastaAndGtf:
 rule GetBasicGtf:
     """
     Some analysis are better done with just 'basic' tagged transcripts,
-    transcript structures thought to encode functional transcripts. This shell
-    command works with Gencode formatted gtf, haven't looked at Ensembl gtfs
+    transcript structures thought to encode functional transcripts. I tried to
+    make this shell command work for ensembl or Gencode gtfs, or maybe even
+    RefSeq, but no guarantees. Also, remove any trailing whitespaces that might
+    be in input gtf
     """
     input:
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.gtf"
@@ -23,9 +25,12 @@ rule GetBasicGtf:
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf"
     shell:
         """
-        awk '/^#/ || /tag "basic"/ || /transcript_biotype "mRNA"/ || /transcript_biotype "protein_coding"/ ||$3=="gene"' {input.gtf} > {output.gtf}
+        awk '/^#/ || /tag "basic"/ || /transcript_biotype "mRNA"/ || /transcript_biotype "protein_coding"/ || $3=="gene" || /transcript_id "[XN]M/' {input.gtf} | sed -e 's/[[:space:]]*$/' > {output.gtf}
+        # check if output has any non comment lines, and just copy original gtf if not
+        if ! grep -q -v -P '^#' {output.gtf}; then
+            cat {input.gtf} | sed -e 's/[[:space:]]*$/' | {output.gtf}
+        fi
         """
-
 
 rule faidxGenome:
     input:
@@ -109,6 +114,10 @@ rule STAR_make_index:
         mkdir -p {output.index}
         STAR --runMode genomeGenerate --genomeSAsparseD 2 --runThreadN {threads} --genomeDir {output.index}/ --sjdbGTFfile {input.gtf} --genomeFastaFiles {input.fa} &> {log}
         """
+
+rule Gather_used_faidx:
+    input:
+        expand(config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai", GenomeName = samples['STARGenomeName'].unique())
 
 rule Gather_STAR_Indexes:
     input:

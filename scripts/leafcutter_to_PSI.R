@@ -2,7 +2,7 @@
 
 if(interactive()){
   args <- scan(text=
-                 "rna-seq/SplicingAnalysis/leafcutter/GRCh38_GencodeRelease44Comprehensive/clustering/leafcutter_perind_numers.counts.gz rna-seq/SplicingAnalysis/leafcutter/GRCh38_GencodeRelease44Comprehensive/juncTableBeds/PSI_ByMax.bed rna-seq/SplicingAnalysis/leafcutter/GRCh38_GencodeRelease44Comprehensive/juncTableBeds/PSI.bed rna-seq/SplicingAnalysis/leafcutter/GRCh38_GencodeRelease44Comprehensive/juncTableBeds/JuncCounts.bed", what='character')
+                 "rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/clustering/leafcutter_perind_numers.counts.gz rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSI_ByMax.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSI.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/JuncCounts.bed", what='character')
 } else{
   args <- commandArgs(trailingOnly=TRUE)
 }

@@ -24,6 +24,13 @@ def FillGenomeNameInFormattedString(FormattedString):
         return FormattedString.format(GenomeName = samples[samples.index==wildcards.sample]['STARGenomeName'].iloc[0])
     return InputFunctionToReturn
 
+def UsePairedEndFeatureCountsIfMixingSingleAndPairedReads(wildcards):
+    R2_isna = samples.loc[samples['STARGenomeName']==wildcards.GenomeName]['R2'].isna()
+    if R2_isna.any() and not R2_isna.all():
+        return "-p"
+    else:
+        return ""
+
 def ExpandAllSamplesInFormatStringFromGenomeNameWildcard(FormattedString):
     def InputFunctionToReturn(wildcards):
         return expand(FormattedString, sample=samples.loc[samples['STARGenomeName']==wildcards.GenomeName].index.unique())

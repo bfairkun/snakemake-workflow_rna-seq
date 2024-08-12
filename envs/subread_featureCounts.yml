@@ -10,6 +10,6 @@ dependencies:
   - libgcc-ng=13.2.0=h807b86a_3
   - libgomp=13.2.0=h807b86a_3
   - libzlib=1.2.13=hd590300_5
-  - subread=2.0.6=he4a0461_0
+  - subread=1.6.4=h84994c4_1
   - zlib=1.2.13=hd590300_5
 prefix: /project2/gilad/bjf79_project1/envs/subread

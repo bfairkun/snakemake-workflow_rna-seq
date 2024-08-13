@@ -25,10 +25,10 @@ rule GetBasicGtf:
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf"
     shell:
         """
-        awk '/^#/ || /tag "basic"/ || /transcript_biotype "mRNA"/ || /transcript_biotype "protein_coding"/ || $3=="gene" || /transcript_id "[XN]M/' {input.gtf} | sed -e 's/[[:space:]]*$/' > {output.gtf}
+        awk '/^#/ || /tag "basic"/ || /transcript_biotype "mRNA"/ || /transcript_biotype "protein_coding"/ || $3=="gene" || /transcript_id "[XN]M/' {input.gtf} | sed -e 's/[[:space:]]*$//' > {output.gtf}
         # check if output has any non comment lines, and just copy original gtf if not
         if ! grep -q -v -P '^#' {output.gtf}; then
-            cat {input.gtf} | sed -e 's/[[:space:]]*$/' | {output.gtf}
+            cat {input.gtf} | sed -e 's/[[:space:]]*$//' > {output.gtf}
         fi
         """
 

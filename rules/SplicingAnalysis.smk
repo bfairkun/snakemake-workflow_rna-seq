@@ -161,3 +161,28 @@ rule Get5ssSeqs:
         """
         zcat {input.basic} | awk -v OFS='\\t' -F'\\t' 'NR>1 {{print $1, $2, $3, $1"_"$2"_"$3"_"$6, ".", $6}}' | sort -u | awk -v OFS='\\t' -F'\\t'  '$6=="+" {{$2=$2-4; $3=$2+11; print $0}} $6=="-" {{$3=$3+3; $2=$3-11; print $0}}' | bedtools getfasta -tab -bed - -s -name -fi {input.fa} | grep -v 'N' > {output}
         """
+
+rule SpliceQ:
+    input:
+        bam = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
+        index = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
+        gtf = lambda wildcards: config['GenomesPrefix'] + samples.loc[wildcards.sample]['STARGenomeName'] + "/Reference.basic.gtf",
+    output:
+        "SplicingAnalysis/SpliceQ/{sample}.tsv.gz"
+    log:
+        "logs/SpliceQ/{sample}.log"
+    params:
+        "-c 0 -i"
+    threads:
+        4
+    shadow:
+        "shallow"
+    conda:
+        "../envs/spliceq.yml"
+    shell:
+        """
+        exec 2> {log}
+        tmpfile=$(mktemp -p . tmp.{wildcards.sample}.XXXXXXXX.txt)
+        SPLICE-q.py {params} -b {input.bam} -g {input.gtf} -p {threads} -o $tmpfile
+        gzip -c $tmpfile > {output}
+        """

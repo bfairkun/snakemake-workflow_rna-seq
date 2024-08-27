@@ -13,6 +13,10 @@ except (NameError, KeyError) as NameOrKeyError:
 samples_SingleEnd = samples[samples['R2'].isna()].index
 samples_PairedEnd = samples[~samples['R2'].isna()].index
 
+SingleEndSamples_wildcards_regex = "|".join(samples_SingleEnd) if len(samples_SingleEnd) != 0 else "DUMMY"
+PairedEndSamples_wildcards_regex = "|".join(samples_PairedEnd) if len(samples_PairedEnd) != 0 else "DUMMY"
+
+
 # # How to access values in samples.tsv
 
 # print(samples)

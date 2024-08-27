@@ -42,14 +42,14 @@ def ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards(FormattedStri
     return InputFunctionToReturn
 
 def GetIndexingParamsFromGenomeName(wildcards):
-    if STAR_genomes.loc[wildcards.GenomeName]['ChromLargerThan512Mbp'] == 'T':
+    if STAR_genomes.loc[wildcards.GenomeName]['ChromLargerThan512Mbp'] == True:
         return '--csi'
     else:
         return ''
 
 def GetIndexingParamsFromSampleName(wildcards):
     GenomeName = samples.loc[wildcards.sample]['STARGenomeName']
-    if STAR_genomes.loc[GenomeName]['ChromLargerThan512Mbp'] == 'T':
+    if STAR_genomes.loc[GenomeName]['ChromLargerThan512Mbp'] == True:
         return '--csi'
     else:
         return ''

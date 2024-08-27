@@ -51,10 +51,13 @@ rule ConcatJuncFilesAndKeepUniq:
         mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
     shell:
         """
-        (awk -v OFS='\\t' '{{ split($11, blockSizes, ","); JuncStart=$2+blockSizes[1]; JuncEnd=$3-blockSizes[2]; print $0, JuncStart, JuncEnd }}' {input} | sort -k1,1 -k6,6 -k13,13n -k14,14n | python scripts/AggregateSortedCattedJuncBeds.py | awk -v OFS='\\t' '{{print $1,$2,$3,$1"_"$2"_"$3"_"$6,$15,$6,$7,$8,$9,$10,$11,$12}}' | bedtools sort -i - | bgzip -c /dev/stdin  > {output}) &> {log}
+        (awk -v OFS='\\t' '{{ split($11, blockSizes, ","); JuncStart=$2+blockSizes[1]; JuncEnd=$3-blockSizes[2]; print $0, JuncStart, JuncEnd }}' {input} | sort -k1,1 -k6,6 -k13,13n -k14,14n | python scripts/AggregateSortedCattedJuncBeds.py | bedtools sort -i - | bgzip -c /dev/stdin  > {output}) &> {log}
         """
 
 rule AnnotateConcatedUniqJuncFile_basic:
+    """
+    note that regtools end coordinate is off by one. The right coordinate should be adjusted down 1 for proper viewing of junc in IGV
+    """
     input:
         junc = "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.junc.gz",
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf",

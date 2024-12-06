@@ -119,6 +119,8 @@ rule leafcutter_to_PSI:
         juncs = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/JuncCounts.bed"),
         PSIByMax = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI.bed"),
         PSI = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_ByMax.bed"),
+        PSIDenom = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSIDenom.bed"),
+        PSIByMaxDenom = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_ByMaxDenom.bed")
     log:
         "logs/leafcutter_to_PSI/{GenomeName}.log"
     resources:
@@ -127,7 +129,7 @@ rule leafcutter_to_PSI:
         "../envs/r_2.yml"
     shell:
         """
-        Rscript scripts/leafcutter_to_PSI.R {input.numers} {output.PSI} {output.PSIByMax} {output.juncs} &> {log}
+        Rscript scripts/leafcutter_to_PSI.R {input.numers} {output.PSI} {output.PSIByMax} {output.juncs} {output.PSIDenom} {output.PSIByMaxDenom} &> {log}
         """
 
 rule bgzip_PSI_bed:
@@ -145,7 +147,7 @@ rule bgzip_PSI_bed:
     shell:
         """
         (bedtools sort -header -i {input.bed} | bgzip /dev/stdin -c > {output.bed}) &> {log}
-        (tabix {params} -p bed {output.bed}) &>> {log} && touch {output.index}
+        (tabix {params} -f -p bed {output.bed}) &>> {log} && touch {output.index}
         """
 
 rule Get5ssSeqs:

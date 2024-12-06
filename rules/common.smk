@@ -47,6 +47,7 @@ def GetIndexingParamsFromGenomeName(wildcards):
     else:
         return ''
 
+
 def GetIndexingParamsFromSampleName(wildcards):
     GenomeName = samples.loc[wildcards.sample]['STARGenomeName']
     if STAR_genomes.loc[GenomeName]['ChromLargerThan512Mbp'] == True:

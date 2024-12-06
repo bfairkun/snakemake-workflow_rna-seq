@@ -1,3 +1,6 @@
 [submodule "scripts/leafcutter"]
 	path = scripts/leafcutter
 	url = git@github.com:davidaknowles/leafcutter.git
+[submodule "scripts/leafcutter2"]
+	path = scripts/leafcutter2
+	url = git@github.com:bfairkun/leafcutter2.git

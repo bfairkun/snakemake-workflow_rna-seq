@@ -9,7 +9,7 @@ rule CopyFastq:
         R1 = temp("Fastq/{sample}.R1.fastq.gz"),
         R2 = temp("Fastq/{sample}.R2.fastq.gz"),
     wildcard_constraints:
-        sample = "|".join(samples_PairedEnd)
+        sample = PairedEndSamples_wildcards_regex
     shell:
         """
         cat {input.R1} > {output.R1}
@@ -25,7 +25,7 @@ rule CopyFastq_SE:
     output:
         R1 = temp("Fastq/{sample}.R1.fastq.gz"),
     wildcard_constraints:
-        sample = "|".join(samples_SingleEnd)
+        sample = SingleEndSamples_wildcards_regex
     shell:
         """
         cat {input.R1} > {output.R1}
@@ -47,7 +47,7 @@ rule fastp:
     resources:
         mem_mb = GetMemForSuccessiveAttempts(8000, 24000)
     wildcard_constraints:
-        sample = "|".join(samples_PairedEnd)
+        sample = PairedEndSamples_wildcards_regex
     log:
         "logs/fastp/{sample}.log"
     conda:
@@ -71,7 +71,7 @@ rule fastp_SE:
     resources:
         mem_mb = GetMemForSuccessiveAttempts(8000, 24000)
     wildcard_constraints:
-        sample = "|".join(samples_SingleEnd)
+        sample = SingleEndSamples_wildcards_regex
     log:
         "logs/fastp/{sample}.log"
     conda:

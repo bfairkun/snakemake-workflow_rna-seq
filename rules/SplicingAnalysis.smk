@@ -188,3 +188,40 @@ rule SpliceQ:
         SPLICE-q.py {params} -b {input.bam} -g {input.gtf} -p {threads} -o $tmpfile
         gzip -c $tmpfile > {output}
         """
+
+rule ConvertLeacfutterJuncNames_To_True_Bed_Coords:
+    input:
+        junclist = "SplicingAnalysis/leafcutter/{GenomeName}/clustering/leafcutter_perind.counts.gz",
+    output:
+        "SplicingAnalysis/ClassifyJuncs/{GenomeName}.juncList.tsv.gz"
+    shell:
+        """
+        zcat {input} | awk 'NR==1 {{ print $1 }} NR>1 {{split($1, a, ":"); print a[1]":"a[2]":"a[3]-1":"a[4] }}' | gzip - > {output}
+        """
+
+
+rule leafcutter2_ClassifyJuncs_ClusterPerInd:
+    """
+    Works with Gencode GTFs only. Need to reformat GTF for others
+    """
+    input:
+        junclist = "SplicingAnalysis/ClassifyJuncs/{GenomeName}.juncList.tsv.gz",
+
+        gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.gtf",
+        fa = config['GenomesPrefix'] + "{GenomeName}/Reference.fa",
+        fai = config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai",
+    output:
+        outdir = directory("SplicingAnalysis/ClassifyJuncs/{GenomeName}"),
+        Classifications = "SplicingAnalysis/ClassifyJuncs/{GenomeName}/Leaf2._junction_classifications.txt",
+    log:
+        "logs/leafcutter2_ClassifyJuncs_ClusterPerInd/{GenomeName}.log"
+    params:
+        rundir = "MazinLeafcutterAnalysis/ClassifyJuncs"
+    conda:
+        "../envs/bedparse.yml"
+    resources:
+        mem_mb = 16000
+    shell:
+        """
+        python scripts/leafcutter2/scripts/SpliceJunctionClassifier.py -c {input.junclist} -G {input.fa} -A {input.gtf} -v -r {output.outdir} &> {log}
+        """

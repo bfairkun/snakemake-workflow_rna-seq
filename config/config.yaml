@@ -3,6 +3,10 @@
 # one row per sample. It can be parsed easily via pandas.
 
 samples: config/samples.tsv
+
+# If there are SRA_accessions in the samples files in place of local filepaths or links to fastqgz files, the appropriate link will have to be identified each time the snakemake runs, which may be time consuming if there are lots of SRA_accessions. To solve this, run the snakemake to generate the below target file, and use this as the sample file with prefilled links
+# samples: samples.SRA_accession_links_filled.tsv
+
 STAR_genomes: config/STAR_Genome_List.tsv
 
 #Prefix for all ReferenceGenomes files... STAR index will be made at {GenomesPrefix}{GenomeName}/
@@ -10,3 +14,9 @@ GenomesPrefix: "/project2/yangili1/bjf79/ReferenceGenomes/"
 
 #Scratch dir for large temporary files
 scratch: "/scratch/midway2/bjf79/"
+
+# key for faster downloading of public fastq samples with aspera instead of
+# ftp.  Leave blank if not using aspera. wget/curl can be used with ftp/http
+# links can be used instead if defined in samples, but aspera tends to just
+# work better/faster
+aspera_key: "/home/bjf79/.aspera/connect/etc/asperaweb_id_dsa.openssh"

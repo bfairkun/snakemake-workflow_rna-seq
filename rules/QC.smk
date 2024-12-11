@@ -24,11 +24,11 @@ rule QualimapRnaseq:
 
 rule MultiQC:
     input:
-        expand("Alignments/STAR_Align/{sample}/Log.final.out", sample= samples.index.unique()),
-        expand("QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt", sample=samples.index.unique()),
-        expand("FastqFastp/{sample}.fastp.json", sample=samples.index.unique()),
+        expand("Alignments/STAR_Align/{sample}/Log.final.out", sample= AllSamples),
+        expand("QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt", sample=AllSamples),
+        expand("FastqFastp/{sample}.fastp.json", sample=AllSamples),
         expand("featureCounts/{GenomeName}/{Strandedness}.Counts.txt.summary", GenomeName=samples['STARGenomeName'].unique(), Strandedness=samples['Strandedness'].unique()),
-        expand("idxstats/{sample}.idxstats.txt", sample=samples.index.unique())
+        expand("idxstats/{sample}.idxstats.txt", sample=AllSamples)
     log: "logs/Multiqc.log"
     output:
         directory("Multiqc")
@@ -41,7 +41,7 @@ rule MultiQC:
 
 rule CountReadsPerSample:
     input:
-        expand("idxstats/{sample}.idxstats.txt", sample=samples.index.unique())
+        expand("idxstats/{sample}.idxstats.txt", sample=AllSamples)
     output:
         "../output/QC/ReadCountsPerSamples.tsv"
     log:
@@ -58,7 +58,7 @@ rule CountReadsPerSample:
 
 rule CatIdxStats_R:
     input:
-        expand("idxstats/{sample}.idxstats.txt", sample=samples.index.unique()[0:10])
+        expand("idxstats/{sample}.idxstats.txt", sample=AllSamples)
     output:
         "test_script.tsv"
     log:

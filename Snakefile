@@ -5,13 +5,16 @@
 # sequencing across multiple lanes with multiple sets of fastq)
 configfile: "config/config.yaml"
 
-include: "rules/common.smk"
+include: "rules/common.py"
+
+validate(samples, "schemas/samples.schema.yaml")
+validate(STAR_genomes, "schemas/STAR_Genome_List.schema.yaml")
 
 wildcard_constraints:
     GenomeName = "|".join(STAR_genomes.index),
-    sample = "|".join(samples.index),
+    sample = "|".join(AllSamples),
     Strandedness = "|".join(["U", "FR", "RF"])
-localrules: DownloadFastaAndGtf, CopyFastq, MultiQC, CopyFastq_SE, STAR_make_index
+localrules: DownloadFastaAndGtf, CopyFastq, MultiQC, CopyFastq_SE, STAR_make_index, DownloadFromAccession
 
 include: "rules/PreprocessAndAlign.smk"
 include: "rules/IndexGenome.smk"
@@ -22,8 +25,9 @@ include: "rules/MakeBigwigs.smk"
 
 rule all:
     input:
-        expand("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",sample=samples.index),
-        expand("SplicingAnalysis/juncfiles/{sample}.junccounts.tsv.gz", sample=samples.index),
+        "samples.SRA_accession_links_filled.tsv",
+        expand("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",sample=AllSamples),
+        expand("SplicingAnalysis/juncfiles/{sample}.junccounts.tsv.gz", sample=AllSamples),
         # expand("FastqFastp/{sample}.fastp.html", sample=samples.index),
         "../output/QC/ReadCountsPerSamples.tsv",
         # expand("bigwigs/unstranded/{sample}.bw", sample=samples.index),

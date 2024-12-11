@@ -1,15 +1,24 @@
+rule Make_new_samples_config:
+    """
+    Rewrite out samples.tsv sample config file, since pre-DAG calculation, links are determined from SRA accession if no local files or links to fastq files are given. Rather than looking up these links everytime the snakemake runs, we can just write a new sample config file with links already in place.
+    """
+    output:
+        samples_tsv = "samples.SRA_accession_links_filled.tsv"
+    run:
+        samples.to_csv(output.samples_tsv, sep='\t', index=False)
+
 rule CopyFastq:
     """
     Useful for when a single sample is spread across multiple fastq, or when the original fastq is in long term storage cds
     """
     input:
-        R1 = lambda wildcards: samples.loc[wildcards.sample]['R1'],
-        R2 = lambda wildcards: samples.loc[wildcards.sample]['R2'],
+        R1 = lambda wildcards: samples.loc[samples['sample']==wildcards.sample]['R1'],
+        R2 = lambda wildcards: samples.loc[samples['sample']==wildcards.sample]['R2'],
     output:
         R1 = temp("Fastq/{sample}.R1.fastq.gz"),
         R2 = temp("Fastq/{sample}.R2.fastq.gz"),
     wildcard_constraints:
-        sample = PairedEndSamples_wildcards_regex
+        sample = wildcard_constraints_from_list(set(samples_from_local) & set(samples_PairedEnd))
     shell:
         """
         cat {input.R1} > {output.R1}
@@ -21,14 +30,48 @@ rule CopyFastq_SE:
     Useful for when a single sample is spread across multiple fastq, or when the original fastq is in long term storage cds
     """
     input:
-        R1 = lambda wildcards: samples.loc[wildcards.sample]['R1'],
+        R1 = lambda wildcards: samples.loc[samples['sample']==wildcards.sample]['R1'],
     output:
         R1 = temp("Fastq/{sample}.R1.fastq.gz"),
     wildcard_constraints:
-        sample = SingleEndSamples_wildcards_regex
+        sample = wildcard_constraints_from_list(set(samples_from_local) & set(samples_SingleEnd))
     shell:
         """
         cat {input.R1} > {output.R1}
+        """
+
+rule DownloadFromAccession:
+    input:
+        aspera_key = config['aspera_key']
+    output:
+        fastq = temp("Fastq/{sample}.{Read}.fastq.gz"),
+    log:
+        "logs/DownloadFastqFromAsperaLink/{sample}.{Read}.log"
+    wildcard_constraints:
+        Read = "R1|R2",
+        sample = wildcard_constraints_from_list(samples_from_links)
+    shadow: "shallow"
+    params:
+        link = lambda wildcards: samples.loc[samples['sample']==wildcards.sample][wildcards.Read + '_link']
+    shell:
+        """
+        if [[ ! -z "{input.aspera_key}" && ! -z "{params.link}" ]]; then
+            for link in {params.link}
+            do
+                tmpfile=$(mktemp -p . tmp.download.XXXXXXXX.fastq.gz)
+                ascp -v -QT -l 300m -P33001 -i {input.aspera_key} era-fasp@$fasp.{{link}} $tmpfile &>> {log}
+                cat $tmpfile >> {output.fastq}
+                rm $tmpfile
+            done
+        else
+            for link in {params.link}
+            do
+                tmpfile=$(mktemp -p . tmp.download.XXXXXXXX.fastq.gz)
+                wget -O $tmpfile ftp://ftp.${{link}} &>> {log}
+                cat $tmpfile >> {output.fastq}
+                rm $tmpfile
+            done
+        fi
         """
 
 rule fastp:
@@ -83,7 +126,7 @@ rule fastp_SE:
 
 rule STAR_Align:
     input:
-        index = lambda wildcards: config['GenomesPrefix'] + samples.loc[wildcards.sample]['STARGenomeName'] + "/STARIndex",
+        index = lambda wildcards: config['GenomesPrefix'] + samples.loc[samples['sample']==wildcards.sample]['STARGenomeName'].tolist()[0] + "/STARIndex",
         R1 = "FastqFastp/{sample}.R1.fastq.gz",
         R2 = lambda wildcards: "FastqFastp/{sample}.R2.fastq.gz" if wildcards.sample in samples_PairedEnd else []
     output:

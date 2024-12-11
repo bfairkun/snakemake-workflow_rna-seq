@@ -1,3 +1,5 @@
-sample	STARGenomeName	R1	R2	Strandedness
-DS-01	GRCh38_GencodeRelease44Comprehensive	/cds/yangili1/bjf79/Fastq/20231129_DylanFractionationTestNextSeq/YLi-DS-8s-DS-01_S1_R1_001.fastq.gz	/cds/yangili1/bjf79/Fastq/20231129_DylanFractionationTestNextSeq/YLi-DS-8s-DS-01_S1_R2_001.fastq.gz	U
-DS-02	GRCh38_GencodeRelease44Comprehensive	/cds/yangili1/bjf79/Fastq/20231129_DylanFractionationTestNextSeq/YLi-DS-8s-DS-02_S2_R1_001.fastq.gz	/cds/yangili1/bjf79/Fastq/20231129_DylanFractionationTestNextSeq/YLi-DS-8s-DS-02_S2_R2_001.fastq.gz	U
+sample	STARGenomeName	R1	R2	SRA_accession	Strandedness
+DS-01	GRCh38_GencodeRelease44Comprehensive	/cds/yangili1/bjf79/Fastq/20231129_DylanFractionationTestNextSeq/YLi-DS-8s-DS-01_S1_R1_001.fastq.gz	/cds/yangili1/bjf79/Fastq/20231129_DylanFractionationTestNextSeq/YLi-DS-8s-DS-01_S1_R2_001.fastq.gz		U
+DS-02	GRCh38_GencodeRelease44Comprehensive	/cds/yangili1/bjf79/Fastq/20231129_DylanFractionationTestNextSeq/YLi-DS-8s-DS-02_S2_R1_001.fastq.gz	/cds/yangili1/bjf79/Fastq/20231129_DylanFractionationTestNextSeq/YLi-DS-8s-DS-02_S2_R2_001.fastq.gz		U
+SRR26282931	GRCh38_GencodeRelease44Comprehensive			SRR26282931	
+SRR26282927	GRCh38_GencodeRelease44Comprehensive			SRR26282927	

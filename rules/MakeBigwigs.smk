@@ -5,8 +5,8 @@ rule MakeBigwigs_NormalizedToGenomewideCoverage:
     """
     input:
         fai = lambda wildcards: config['GenomesPrefix'] + samples.loc[wildcards.sample]['STARGenomeName'] + "/Reference.fa.fai",
-        bam = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
-        bai = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
+        bam = "Alignments/{sample}/Aligned.sortedByCoord.out.bam",
+        bai = "Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
         NormFactorsFile = "../output/QC/ReadCountsPerSamples.tsv"
     params:
         GenomeCovArgs="-split",

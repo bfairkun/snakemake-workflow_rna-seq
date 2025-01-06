@@ -1,8 +1,8 @@
 
 rule featurecounts:
     input:
-        bam = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam"),
-        index = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
+        bam = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
+        index = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf",
     output:
         counts = "featureCounts/{GenomeName}/{Strandedness}.Counts.txt",
@@ -21,13 +21,13 @@ rule featurecounts:
         extra = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads
     shell:
         """
-        featureCounts {params.strand} {params.extra} -T {threads} --ignoreDup --primary -a {input.gtf} -o {output.counts} {input.bam} &> {log}
+        featureCounts {params.strand} {params.extra} -T {threads} --ignoreDup --primary -a {input.gtf} -o {output.counts} {input.bam} --maxMOp 100 &> {log}
         """
 
 use rule featurecounts as featurecounts_allUnstranded with:
     input:
-        bam = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam"),
-        index = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
+        bam = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
+        index = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf",
     output:
         counts = "featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt",

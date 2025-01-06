@@ -1,4 +1,6 @@
 *
+!schemas
+!schemes/*
 !config
 !config/*
 !images

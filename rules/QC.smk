@@ -2,8 +2,8 @@
 rule QualimapRnaseq:
     input:
         gtf = FillGenomeNameInFormattedString(config['GenomesPrefix'] + "{GenomeName}/Reference.gtf"),
-        bam="Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
-        index="Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"
+        bam="Alignments/{sample}/Aligned.sortedByCoord.out.bam",
+        index="Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"
     output:
         results = "QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt",
         outdir = directory("QC/QualimapRnaseq/{sample}")
@@ -24,10 +24,10 @@ rule QualimapRnaseq:
 
 rule MultiQC:
     input:
-        expand("Alignments/STAR_Align/{sample}/Log.final.out", sample= AllSamples),
-        expand("QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt", sample=AllSamples),
+        expand("Alignments/{sample}/Log.final.out", sample= samples_ForSTAR),
+        # expand("QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt", sample=AllSamples),
         expand("FastqFastp/{sample}.fastp.json", sample=AllSamples),
-        expand("featureCounts/{GenomeName}/{Strandedness}.Counts.txt.summary", GenomeName=samples['STARGenomeName'].unique(), Strandedness=samples['Strandedness'].unique()),
+        expand("featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt.summary", GenomeName=samples['STARGenomeName'].unique(), Strandedness=samples['Strandedness'].unique()),
         expand("idxstats/{sample}.idxstats.txt", sample=AllSamples)
     log: "logs/Multiqc.log"
     output:

@@ -26,7 +26,7 @@ def fetch_ena_links(accession):
         if not data:
             return None, None  # No links found
         fastq_links = data[0]["fastq_ftp"]
-        links = [remove_prefix(link, 'ftp.') for link in fastq_links.split(";")]  # Split R1 and R2 links
+        links = ["ftp://" + link for link in fastq_links.split(";")]  # Split R1 and R2 links
         return links[0], links[1] if len(links) > 1 else None
     except Exception as e:
         print(f"Error fetching links for {accession}: {e}")
@@ -59,9 +59,24 @@ except (NameError, KeyError) as NameOrKeyError:
     STAR_genomes = pd.read_csv("config/STAR_Genome_List.tsv",sep='\t', index_col=0, converters={"ChromLargerThan512Mbp": lambda x: x.lower() in ["yes", "true", "y", "True", "T"]})
 
 STAR_genomes['GenomeName'] = STAR_genomes.index
-samples[["R1_link", "R2_link"]] = samples["SRA_accession"].apply(lambda acc: pd.Series(fetch_ena_links(acc)))
+
+# Add column for R1_link and R2_link if not existing, and fill links if SRA_accession provided
+if 'R1_link' not in samples.columns:
+    samples['R1_link'] = pd.NA
+if 'R2_link' not in samples.columns:
+    samples['R2_link'] = pd.NA
+samples[["R1_link", "R2_link"]] = samples.apply(
+    lambda row: pd.Series(fetch_ena_links(row["SRA_accession"])) 
+    if pd.isna(row["R1_link"]) or row["R1_link"] == "" 
+    else pd.Series([row["R1_link"], row["R2_link"]]),
+    axis=1
+)
 
 # Add column for SE vs PE if contains any NAs/blanks or column doesn't already exist
+if 'R1' not in samples.columns:
+    samples['R1'] = pd.NA
+if 'R2' not in samples.columns:
+    samples['R2'] = pd.NA
 if 'Library_Layout' not in samples.columns:
     samples['Library_Layout'] = pd.NA
 samples['Library_Layout'] = samples.apply(lambda row: populate_Library_Layout(row) if pd.isna(row['Library_Layout']) or row['Library_Layout'] == "" else row['Library_Layout'], axis=1)
@@ -75,6 +90,8 @@ samples_PairedEnd = samples[samples['Library_Layout']=='PAIRED']['sample']
 
 samples_from_links = samples.loc[samples["R1"].isna() & samples["R1_link"].notna()]['sample']
 samples_from_local = samples.loc[samples["R1"].notna()]['sample']
+
+samples_ForSTAR = samples.loc[samples['Aligner']=='STAR']['sample']
 
 SingleEndSamples_wildcards_regex = wildcard_constraints_from_list(samples_SingleEnd)
 PairedEndSamples_wildcards_regex = wildcard_constraints_from_list(samples_PairedEnd)

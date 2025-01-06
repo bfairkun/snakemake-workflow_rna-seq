@@ -5,6 +5,7 @@ rule DownloadFastaAndGtf:
     params:
         fa_link = lambda wildcards: STAR_genomes.loc[wildcards.GenomeName]['FastaLink'],
         gtf_link = lambda wildcards: STAR_genomes.loc[wildcards.GenomeName]['GtfLink'],
+    localrule: True
     shell:
         """
         wget -O- {params.fa_link} | zcat > {output.fa}

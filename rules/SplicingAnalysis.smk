@@ -1,7 +1,7 @@
 rule ExtractJuncs:
     input:
-        bam = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
-        index = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
+        bam = "Alignments/{sample}/Aligned.sortedByCoord.out.bam",
+        index = "Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
     output:
         "SplicingAnalysis/juncfiles/{sample}.junc",
     params:
@@ -166,8 +166,8 @@ rule Get5ssSeqs:
 
 rule SpliceQ:
     input:
-        bam = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam",
-        index = "Alignments/STAR_Align/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
+        bam = "Alignments/{sample}/Aligned.sortedByCoord.out.bam",
+        index = "Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
         gtf = lambda wildcards: config['GenomesPrefix'] + samples.loc[wildcards.sample]['STARGenomeName'] + "/Reference.basic.gtf",
     output:
         "SplicingAnalysis/SpliceQ/{sample}.tsv.gz"
@@ -212,7 +212,7 @@ rule leafcutter2_ClassifyJuncs_ClusterPerInd:
         fai = config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai",
     output:
         outdir = directory("SplicingAnalysis/ClassifyJuncs/{GenomeName}"),
-        Classifications = "SplicingAnalysis/ClassifyJuncs/{GenomeName}/Leaf2._junction_classifications.txt",
+        Classifications = "SplicingAnalysis/ClassifyJuncs/{GenomeName}/Leaf2_junction_classifications.txt",
     log:
         "logs/leafcutter2_ClassifyJuncs_ClusterPerInd/{GenomeName}.log"
     params:

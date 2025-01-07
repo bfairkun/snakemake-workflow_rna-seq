@@ -1,0 +1,45 @@
+$schema: "https://json-schema.org/draft-06/schema#"
+description: an entry in the sample sheet
+properties:
+    sample:
+        type: string
+        description: sample name/identifier. Duplicate over multiple rows for multiple fastq runs
+    STARGenomeName:
+        type: string
+        description: Name of fasta/gtf pair used to align, as uniquely defined in STAR_Genome_List
+    R1:
+        type: string
+        description: Path to local R1 fastq gz file
+    R2:
+        type: string
+        description: Path to local R2 fastq gz file
+    SRA_accession:
+        type: string
+        description: SRA run accession for downloading. Local files take precedence if also provided in same row. To combine a local file and SRA file within pipeline, need another row with same sample value
+    Strandedness:
+        type: string
+        description: Strandedness of library
+        default: U
+        enum: ["U", "FR", "RF"]
+    Library_Layout:
+        type: string
+        description: PAIRED or SINGLE. If not given, will be auto-inferred based on whether R2 was provided along with an R1, or based on SRA accession
+        enum: ["PAIRED", "SINGLE"]
+    R1_link:
+        type: string
+        description: ftp download link for R1. Will be auto-inferred from SRA accession if provided
+    R2_link:
+        type: string
+        description: ftp download link for R2. Will be auto-inferred from SRA accession if provided
+    Aligner:
+        type: string
+        description: STAR (preferred for short Illumina reads) or minimap2 (preferred for long reads)
+        default: STAR
+        enum: ["STAR", "minimap2"]
+required:
+    - sample
+    - STARGenomeName
+    - Strandedness
+    - Aligner
+
+

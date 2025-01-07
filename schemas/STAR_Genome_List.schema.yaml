@@ -1,0 +1,26 @@
+$schema: "https://json-schema.org/draft-06/schema#"
+description: an entry in the sample sheet
+properties:
+    GenomeName:
+        type: string
+        description: Unique name to assign to the fasta/gtf pair. I often reuse the same STARGenomeName across separate snakemake pipeline projects
+    FastaLink:
+        type: string
+        description: link to wget download fasta file
+    GtfLink:
+        type: string
+        description: link to wget download gtf file
+    Notes:
+        type: string
+        description: Optional notes about the genome
+    ChromLargerThan512Mbp:
+        description: If any of the chromosomes in the genome are >512Mbp, which sometimes requires different commands for making index files.
+        type: boolean
+        default: False
+required:
+    - GenomeName
+    - FastaLink
+    - GtfLink
+    - ChromLargerThan512Mbp
+
+

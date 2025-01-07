@@ -7,8 +7,6 @@ configfile: "config/config.yaml"
 
 include: "rules/common.py"
 
-validate(samples, "schemas/samples.schema.yaml")
-validate(STAR_genomes, "schemas/STAR_Genome_List.schema.yaml")
 
 wildcard_constraints:
     GenomeName = "|".join(STAR_genomes.index),

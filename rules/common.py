@@ -10,7 +10,8 @@ def remove_prefix(s, prefix):
 
 def fetch_ena_links(accession):
     """Fetch R1 and R2 FTP links for a given SRA accession."""
-    if accession in [np.nan, ""]:
+    if (accession in [np.nan, ""]) or pd.isna(accession):
+        # print("None!!")
         return None, None
     url = "https://www.ebi.ac.uk/ena/portal/api/filereport"
     params = {
@@ -81,7 +82,9 @@ if 'Library_Layout' not in samples.columns:
     samples['Library_Layout'] = pd.NA
 samples['Library_Layout'] = samples.apply(lambda row: populate_Library_Layout(row) if pd.isna(row['Library_Layout']) or row['Library_Layout'] == "" else row['Library_Layout'], axis=1)
 
-
+# validate
+validate(samples, "../schemas/samples.schema.yaml")
+validate(STAR_genomes, "../schemas/STAR_Genome_List.schema.yaml")
 
 AllSamples = samples['sample'].unique()
 

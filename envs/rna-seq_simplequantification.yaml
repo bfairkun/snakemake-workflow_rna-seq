@@ -15,7 +15,7 @@ dependencies:
   - qualimap
   - samtools
   - scipy
-  - snakemake=6.1.0
+  - snakemake=7.32.4
   - star=2.6.1b
   - ucsc-bedgraphtobigwig
   - ucsc-liftover

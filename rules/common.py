@@ -3,6 +3,9 @@ import numpy as np
 import os
 import requests
 from snakemake.utils import validate
+from snakemake.utils import min_version
+
+min_version("7.32")
 
 # general functions
 def remove_prefix(s, prefix):

@@ -1,3 +1,4 @@
 GenomeName	FastaLink	GtfLink	Notes	ChromLargerThan512Mbp
 GRCh38_GencodeRelease44Comprehensive	https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/GRCh38.primary_assembly.genome.fa.gz	https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/gencode.v44.primary_assembly.annotation.gtf.gz		F
 Rat_ensemblv_79	https://ftp.ensembl.org/pub/release-79/fasta/rattus_norvegicus/dna/Rattus_norvegicus.Rnor_5.0.dna.toplevel.fa.gz	https://ftp.ensembl.org/pub/release-79/gtf/rattus_norvegicus/Rattus_norvegicus.Rnor_5.0.79.gtf.gz	"Rat, Rnor_5.0, Rattus norvegicus"	F
+Opossum_UCSC.monDom5_ensvUnknown	https://hgdownload.soe.ucsc.edu/goldenPath/monDom5/bigZips/monDom5.fa.gz	https://hgdownload.soe.ucsc.edu/goldenPath/monDom5/bigZips/genes/monDom5.ensGene.gtf.gz	Opossum, monDom5, Monodelphis domestica	TRUE

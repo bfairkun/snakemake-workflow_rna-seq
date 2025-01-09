@@ -127,6 +127,12 @@ def ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards(FormattedStri
         return expand(FormattedString, sample=samples.loc[(samples['STARGenomeName']==wildcards.GenomeName) & (samples['Strandedness']==wildcards.Strandedness)]['sample'].unique())
     return InputFunctionToReturn
 
+def GetIndexSuffix(wildcards):
+    if STAR_genomes.loc[wildcards.GenomeName]['ChromLargerThan512Mbp'] == True:
+        return 'csi'
+    else:
+        return 'tbi'
+
 def GetIndexingParamsFromGenomeName(wildcards):
     if STAR_genomes.loc[wildcards.GenomeName]['ChromLargerThan512Mbp'] == True:
         return '--csi'

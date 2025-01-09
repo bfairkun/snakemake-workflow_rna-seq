@@ -43,52 +43,86 @@ rule faidxGenome:
         samtools faidx {input.fa}
         """
 
-rule gtf_to_bed12:
-    """
-    This shell command works with Gencode formatted gtf, haven't looked at
-    Ensembl gtfs
-    """
+rule SortIndexGtf:
     input:
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.gtf"
     output:
-        bed = temp(config['GenomesPrefix'] + "{GenomeName}/Reference.bed.gz"),
-        tbi = temp(config['GenomesPrefix'] + "{GenomeName}/Reference.bed.gz.tbi")
-    conda:
-        "../envs/bedparse.yml"
+        gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.gtf.gz",
+        index  = touch(config['GenomesPrefix'] + "{GenomeName}/Reference.gtf.gz.indexing_done"),
+    params:
+        GetIndexingParamsFromGenomeName
     shell:
         """
-        bedparse gtf2bed {input.gtf} --extraFields gene_id,transcript_id,gene_type,gene_name,transcript_type,transcript_support_level,tag,transcript_name | awk -F'\\t' -v OFS='\\t' '{{$4=$NF; print $0}}' | bedtools sort -i - | bgzip /dev/stdin -c > {output.bed}
-        tabix -p bed {output.bed}
+        (grep '^#' {input.gtf} ; grep -v '^#' {input.gtf} | sort -k1,1 -k4,4n) | bgzip -c > {output.gtf} && tabix -f {params} -p gff {output.gtf} && touch {output.index}
         """
 
-rule colorize_gtfbed:
+rule MakeIGV_GenomeFile:
     """
-    Only tested on human Gencode v44
+    Note that csi indexes don't seem to load with IGV genomes in my experience (indefenite loading). They can be opened as seperate tracks but not as part of the genome. Hence, the if statement in the jinja template
     """
     input:
-        bed = config['GenomesPrefix'] + "{GenomeName}/Reference.bed.gz",
+        fa = config['GenomesPrefix'] + "{GenomeName}/Reference.fa",
+        fai = config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai",
+        gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.gtf.gz",
     output:
-        bed = temp(config['GenomesPrefix'] + "{GenomeName}/Reference.colored.bed"),
-        colorkey = config['GenomesPrefix'] + "{GenomeName}/Reference.colored.ColorsKey.png"
-    conda:
-        "../envs/r_2.yml"
-    log:
-        "logs/colorize_gtfbed/{GenomeName}.log"
-    shell:
+        config['GenomesPrefix'] + "{GenomeName}/Reference.igv.genome.json"
+    params:
+        name = lambda wildcards: STAR_genomes.loc[wildcards.GenomeName]['Notes'],
+        index_suffix = GetIndexSuffix
+    run:
+        import jinja2
+        # Read the template file
+        template_content = """{
+          "id": "{{name}}",
+          "name": "{{name}}",
+          "fastaURL": "Reference.fa",
+          "indexURL": "Reference.fa.fai",
+          "tracks": [
+          {% if index_suffix == 'tbi' %}
+            {
+              "name": "Genes",
+              "format": "gtf",
+              "url": "Reference.gtf.gz",
+              "indexURL": "Reference.gtf.gz.{{index_suffix}}",
+              "indexed": true,
+              "hidden" : false,
+              "searchable": true,
+              "removable": false
+            }
+          {% endif %}
+          ]
+        }
         """
-        Rscript scripts/ColorTranscriptsInGtfBed.R {input.bed} {output.bed} {output.colorkey} &> {log}
-        """
+        # Create a Jinja2 template from the content
+        template = jinja2.Template(template_content)
+        # Render the template with the wildcards and params
+        rendered_content = template.render(id=wildcards.GenomeName, name=params.name, index_suffix = params.index_suffix)
+        # Write the rendered content to the output file
+        with open(output[0], 'w') as f:
+            f.write(rendered_content)
 
-rule index_colored_bed12:
+
+rule MakeColored_Transcripts_bed:
+    """
+    Bed file for each transcript in gtf, colored by NMDFinderB status
+    """
     input:
-        bed = config['GenomesPrefix'] + "{GenomeName}/Reference.colored.bed",
+        fa = config['GenomesPrefix'] + "{GenomeName}/Reference.fa",
+        fai = config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai",
+        gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.gtf"
     output:
-        bed = config['GenomesPrefix'] + "{GenomeName}/Reference.Transcripts.colored.bed.gz",
-        tbi = config['GenomesPrefix'] + "{GenomeName}/Reference.Transcripts.colored.bed.gz.tbi"
+        bed = config['GenomesPrefix'] + "{GenomeName}/Reference.ColoredTranscripts.bed.gz",
+        index  = touch(config['GenomesPrefix'] + "{GenomeName}/Reference.ColoredTranscripts.bed.gz.indexing_done"),
+    params:
+        tabixParams = GetIndexingParamsFromGenomeName
+    shadow: "shallow"
+    conda:
+        "../scripts/leafcutter2/scripts/Reformat_gtf.conda_env.yml"
     shell:
         """
-        bedtools sort -i {input.bed} | bgzip /dev/stdin -c > {output.bed}
-        tabix -p bed {output.bed}
+        python scripts/leafcutter2/scripts/Reformat_gtf.py -i {input.gtf} -fa {input.fa} -bed12 Transcripts.colored.bed  -o Transcripts.gtf -infer_gene_type_approach B -translation_approach C -gene_name_attribute_name gene_id
+        bedtools sort -i Transcripts.colored.bed | bgzip -c /dev/stdin > {output.bed}
+        tabix -f {params.tabixParams} -p bed {output.bed} && touch {output.index}
         """
 
 rule STAR_make_index:
@@ -122,7 +156,11 @@ rule Gather_used_faidx:
 
 rule Gather_STAR_Indexes:
     input:
-        expand(config['GenomesPrefix'] + "{GenomeName}/STARIndex", GenomeName = STAR_genomes.index)
+        expand(config['GenomesPrefix'] + "{GenomeName}/STARIndex", GenomeName = STAR_genomes.index),
+
+rule Gather_ColoredTranscript_beds:
+    input:
+        expand(config['GenomesPrefix'] + "{GenomeName}/Reference.ColoredTranscripts.bed.gz", GenomeName = STAR_genomes.index)
 
 rule Gather_used_STAR_Indexes:
     input:

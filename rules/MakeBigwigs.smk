@@ -4,7 +4,7 @@ rule MakeBigwigs_NormalizedToGenomewideCoverage:
     Scale bigwig to base coverage per billion chromosomal reads
     """
     input:
-        fai = lambda wildcards: config['GenomesPrefix'] + samples.loc[wildcards.sample]['STARGenomeName'] + "/Reference.fa.fai",
+        fai = lambda wildcards: config['GenomesPrefix'] + samples.loc[samples['sample']==wildcards.sample]['STARGenomeName'].tolist()[0] + "/Reference.fa.fai",
         bam = "Alignments/{sample}/Aligned.sortedByCoord.out.bam",
         bai = "Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
         NormFactorsFile = "../output/QC/ReadCountsPerSamples.tsv"

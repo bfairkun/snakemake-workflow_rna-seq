@@ -138,7 +138,7 @@ rule STAR_Align:
     input:
         index = lambda wildcards: config['GenomesPrefix'] + samples.loc[samples['sample']==wildcards.sample]['STARGenomeName'].tolist()[0] + "/STARIndex",
         R1 = "FastqFastp/{sample}.R1.fastq.gz",
-        R2 = lambda wildcards: "FastqFastp/{sample}.R2.fastq.gz" if wildcards.sample in samples_PairedEnd else []
+        R2 = lambda wildcards: "FastqFastp/{sample}.R2.fastq.gz" if wildcards.sample in samples_PairedEnd.tolist() else []
     output:
         outdir = directory("Alignments/{sample}"),
         bam = "Alignments/{sample}/Aligned.sortedByCoord.out.bam",

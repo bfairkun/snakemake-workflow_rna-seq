@@ -49,7 +49,7 @@ PSI.df <- (Count.Table.mat / as.numeric(ClusterSum.mat) * 100) %>%
   signif() %>%
   as.data.frame()
 
-PSIByWithinClusterMax.df <- (Count.Table.mat / as.numeric(ClusterSum.mat) * 100) %>%
+PSIByWithinClusterMax.df <- (Count.Table.mat / as.numeric(ClusterMax.mat) * 100) %>%
   signif() %>%
   as.data.frame()
 

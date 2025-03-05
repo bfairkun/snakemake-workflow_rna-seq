@@ -3,7 +3,8 @@ description: an entry in the sample sheet
 properties:
     sample:
         type: string
-        description: sample name/identifier. Duplicate over multiple rows for multiple fastq runs
+        pattern: "^[A-Za-z_][A-Za-z0-9_.]*$"
+        description: sample name/identifier. Duplicate over multiple rows for multiple fastq runs. sample name must start with a letter or underscore, and can only contain letters, numbers, underscores, and periods
     STARGenomeName:
         type: string
         description: Name of fasta/gtf pair used to align, as uniquely defined in STAR_Genome_List

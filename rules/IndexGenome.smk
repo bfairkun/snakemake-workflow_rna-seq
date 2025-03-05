@@ -125,6 +125,28 @@ rule MakeColored_Transcripts_bed:
         tabix -f {params.tabixParams} -p bed {output.bed} && touch {output.index}
         """
 
+rule Extract_introns:
+    """
+    Extract introns from gtf as bed file with 5'ss and 3'ss sequences
+    """
+    input:
+        fa = config['GenomesPrefix'] + "{GenomeName}/Reference.fa",
+        gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.gtf"
+    output:
+        bed = config['GenomesPrefix'] + "{GenomeName}/Reference.Introns.bed.gz",
+        index  = touch(config['GenomesPrefix'] + "{GenomeName}/Reference.Introns.bed.gz.indexing_done"),
+    log:
+        "logs/Extract_introns/{GenomeName}.log"
+    conda:
+        "../scripts/leafcutter2/scripts/Reformat_gtf.conda_env.yml"
+    params:
+        tabixParams = GetIndexingParamsFromGenomeName
+    shell:
+        """
+        (python scripts/ExtractIntronsFromGtf.py --gtf {input.gtf} --reference {input.fa} --output /dev/stdout |  awk -F'\\t' -v OFS='\\t' '{{split($4, a, "|"); print $1, $2, $3, a[2]"|"a[3], $5, $6}}' | sort | uniq | bedtools sort -i - | bgzip -c /dev/stdin > {output.bed} ) &> {log}
+        tabix -f {params.tabixParams} -p bed {output.bed} && touch {output.index}
+        """
+
 rule STAR_make_index:
     """
     did not work on bigmem2. Never figured out why (the log file didn't

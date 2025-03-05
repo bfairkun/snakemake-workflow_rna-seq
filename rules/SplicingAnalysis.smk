@@ -73,6 +73,27 @@ rule AnnotateConcatedUniqJuncFile_basic:
         (regtools junctions annotate {input.junc} {input.fa} {input.gtf} | gzip - > {output} ) &> {log}
         """
 
+rule Add_splice_site_scores_to_regtools_annotate:
+    input:
+        annotated_junctions="SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.tsv.gz",
+        reference_fasta=config['GenomesPrefix'] + "{GenomeName}/Reference.fa",
+        fai = config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai",
+        AnnotatedIntronsWithSS = config['GenomesPrefix'] + "{GenomeName}/Reference.Introns.bed.gz"
+    output:
+        "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.with_ss_scores.tsv.gz"
+    conda:
+        "../scripts/leafcutter2/scripts/Reformat_gtf.conda_env.yml"
+    log:
+        "logs/Add_splice_site_scores_to_regtools_annotate.{GenomeName}.log"
+    shell:
+        """
+        python scripts/Add_SS_To_RegtoolsAnnotate.py \
+            --input {input.annotated_junctions} \
+            --reference {input.reference_fasta} \
+            --introns {input.AnnotatedIntronsWithSS} \
+            --output {output} &> {log}
+        """
+
 rule make_leafcutter_juncfile:
     input:
         ExpandAllSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc"),
@@ -117,8 +138,8 @@ rule leafcutter_to_PSI:
         numers = "SplicingAnalysis/leafcutter/{GenomeName}/clustering/leafcutter_perind_numers.counts.gz"
     output:
         juncs = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/JuncCounts.bed"),
-        PSIByMax = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI.bed"),
-        PSI = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_ByMax.bed"),
+        PSI = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI.bed"),
+        PSIByMax = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_ByMax.bed"),
         PSIDenom = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSIDenom.bed"),
         PSIByMaxDenom = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_ByMaxDenom.bed")
     log:

@@ -12,6 +12,9 @@ STAR_genomes: config/STAR_Genome_List.tsv
 #Prefix for all ReferenceGenomes files... STAR index will be made at {GenomesPrefix}{GenomeName}/
 GenomesPrefix: "/project2/yangili1/bjf79/ReferenceGenomes/"
 
+# contrast_file three column tsv for each differential splicing and differential expression to perform
+contrast_file: config/contrasts.tsv
+
 #Scratch dir for large temporary files
 scratch: "/scratch/midway2/bjf79/"
 

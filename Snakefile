@@ -27,17 +27,15 @@ rule all:
         expand("SplicingAnalysis/juncfiles/{sample}.junccounts.tsv.gz", sample=AllSamples),
         "../output/QC/ReadCountsPerSamples.tsv",
         expand("bigwigs/unstranded/{sample}.bw", sample=AllSamples),
-        #
         # "SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.tsv.gz",
         # "Multiqc",
         expand(config['GenomesPrefix'] + "{GenomeName}/STARIndex", GenomeName = samples['STARGenomeName'].unique()),
         expand("featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt", GenomeName = samples['STARGenomeName'].unique()),
         expand("SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.with_ss_scores.tsv.gz", GenomeName = samples['STARGenomeName'].unique()),
         expand("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.sorted.bed.gz", GenomeName = samples['STARGenomeName'].unique(), Metric = ["JuncCounts", "PSI", "PSI_ByMax", "PSIDenom", "PSI_ByMaxDenom"]),
-        expand("SplicingAnalysis/ClassifyJuncs/{GenomeName}/Leaf2_junction_classifications.txt", GenomeName = samples['STARGenomeName'].unique())
-        expand("results/{contrast}.differential_splicing.txt", contrast=contrast_names) if contrast_names else [],
-        expand("results/{contrast}.differential_expression.txt", contrast=contrast_names) if contrast_names else []
-
+        expand("SplicingAnalysis/ClassifyJuncs/{GenomeName}/Leaf2_junction_classifications.txt", GenomeName = samples['STARGenomeName'].unique()),
+        expand("results/{contrast}.differential_splicing.txt", contrast=config["contrast_names"]) if config["contrast_names"] else [],
+        expand("results/{contrast}.differential_expression.txt", contrast=config["contrast_names"]) if config["contrast_names"] else []
         # config['GenomesPrefix'] + "GRCh38_GencodeRelease44Comprehensive/Reference.Transcripts.colored.bed.gz",
         # expand("featureCounts/GRCh38_GencodeRelease44Comprehensive/{Strandedness}.Counts.txt", Strandedness=samples['Strandedness'].unique())
 

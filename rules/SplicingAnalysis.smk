@@ -246,3 +246,26 @@ rule leafcutter2_ClassifyJuncs_ClusterPerInd:
         """
         python scripts/leafcutter2/scripts/SpliceJunctionClassifier.py -c {input.junclist} -G {input.fa} -A {input.gtf} -v -r {output.outdir} &> {log}
         """
+
+rule leafcutter_ds_contrasts:
+    input:
+        groupfile = lambda wildcards: os.path.abspath(config['contrast_group_files_prefix'] + "{contrast}.txt"),
+        numers = lambda wildcards: get_filled_path_from_contrast(wildcards, "SplicingAnalysis/leafcutter/{GenomeName}/clustering/leafcutter_perind_numers.counts.gz"),
+    output:
+        directory("SplicingAnalysis/differential_splicing/{contrast}/")
+    threads: 4
+    wildcard_constraints:
+        treatment = "|".join(contrasts)
+    resources:
+        ntasks = 5,
+        mem_mb = 24000
+    params:
+        Prefix = "MazinLeafcutterAnalysis/Contrasts_ds/",
+        ExtraParams = "-i 2 -g 2"
+    log:
+        "logs/leafcutter_ds/{contrast}.log"
+    shell:
+        """
+        mkdir -p {output}
+        /software/R-3.4.3-el7-x86_64/bin/Rscript scripts/leafcutter/scripts/leafcutter_ds.R -p {threads} -o {output}/leaf {params.ExtraParams} {input.numers} {input.groupfile} &> {log}
+        """

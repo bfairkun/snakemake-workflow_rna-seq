@@ -25,7 +25,7 @@ rule QualimapRnaseq:
 rule MultiQC:
     input:
         expand("Alignments/{sample}/Log.final.out", sample= samples_ForSTAR),
-        # expand("QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt", sample=AllSamples),
+        expand("QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt", sample=AllSamples),
         expand("FastqFastp/{sample}.fastp.json", sample=AllSamples),
         expand("featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt.summary", GenomeName=samples['STARGenomeName'].unique(), Strandedness=samples['Strandedness'].unique()),
         expand("idxstats/{sample}.idxstats.txt", sample=AllSamples)

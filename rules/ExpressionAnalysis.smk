@@ -43,4 +43,18 @@ use rule featurecounts as featurecounts_allUnstranded with:
         strand = '-s 0',
         extra = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads
 
-# rule GetGeneNames_bioMart:
+rule edgeR_differential_expression:
+    input:
+        groupfile = lambda wildcards: os.path.abspath(config['contrast_group_files_prefix'] + "{contrast}.txt"),
+        counts = lambda wildcards: get_filled_path_from_contrast(wildcards, "featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt"),
+    output:
+        results = "differential_expression/{contrast}/results.tsv.gz",
+        plots = directory("differential_expression/{contrast}/plots")
+    conda:
+        "../envs/r_2.yml"
+    log:
+        "logs/differential_expression/{contrast}.log"
+    shell:
+        """
+        Rscript scripts/BasicDifferentialExpression_edgeR.R {input.counts} {input.groupfile} {output.results} {output.plots} &> {log}
+        """

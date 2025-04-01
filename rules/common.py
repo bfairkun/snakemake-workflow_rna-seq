@@ -2,12 +2,29 @@ import pandas as pd
 import numpy as np
 import os
 import requests
+
 from snakemake.utils import validate
 from snakemake.utils import min_version
+from snakemake.io import glob_wildcards
+
+
 
 min_version("7.32")
 
+# Define default configuration for interactive use
+if 'config' not in globals():
+    config = {
+        "samples": "config/samples.tsv",
+        "STAR_genomes": "module_workflows/rna_seq/config/STAR_Genome_List.tsv",
+        "contrast_group_files_prefix": "config/contrast_group_files/"
+    }
+
 # general functions
+def read_config_file(config_file):
+    with open(config_file, 'r') as file:
+        config = yaml.safe_load(file)
+    return config
+
 def remove_prefix(s, prefix):
     return s[len(prefix):] if s.startswith(prefix) else s
 
@@ -55,12 +72,8 @@ def wildcard_constraints_from_list(l):
         return "|".join(l)
 
 # read and process samples files
-try:
-    samples = pd.read_csv(config["samples"],sep='\t')
-    STAR_genomes = pd.read_csv(config["STAR_genomes"],sep='\t', index_col=0, converters={"ChromLargerThan512Mbp": lambda x: x.lower() in ["yes", "true", "y", "True", "T"]})
-except (NameError, KeyError) as NameOrKeyError:
-    samples = pd.read_csv("config/samples.tsv",sep='\t')
-    STAR_genomes = pd.read_csv("config/STAR_Genome_List.tsv",sep='\t', index_col=0, converters={"ChromLargerThan512Mbp": lambda x: x.lower() in ["yes", "true", "y", "True", "T"]})
+samples = pd.read_csv(config["samples"],sep='\t')
+STAR_genomes = pd.read_csv(config["STAR_genomes"],sep='\t', index_col=0, converters={"ChromLargerThan512Mbp": lambda x: x.lower() in ["yes", "true", "y", "True", "T"]})
 
 STAR_genomes['GenomeName'] = STAR_genomes.index
 
@@ -102,7 +115,19 @@ samples_ForSTAR = samples.loc[samples['Aligner']=='STAR']['sample']
 SingleEndSamples_wildcards_regex = wildcard_constraints_from_list(samples_SingleEnd)
 PairedEndSamples_wildcards_regex = wildcard_constraints_from_list(samples_PairedEnd)
 
-
+# differential splicing and expression contrasts
+if config["contrast_group_files_prefix"]:
+    contrasts, = glob_wildcards("config/contrast_group_files/{contrast}.txt")
+    contrast_group_files_list = [os.path.join("config/contrast_group_files/", f"{contrast}.txt") for contrast in contrasts]
+    contrasts_df_list = []
+    for contrast, file in zip(contrasts, contrast_group_files_list):
+        df = pd.read_csv(file, sep="\t", header=None, names=["sample", "Group"])
+        df["ContrastName"] = contrast
+        contrasts_df_list.append(df)
+    contrasts_df = pd.concat(contrasts_df_list, ignore_index=True)
+    contrasts_df = contrasts_df.merge(samples[["sample", "STARGenomeName"]], on="sample", how="left")
+else:
+    contrasts = []
 # Input functions and other functions for the snakemake
 
 def FillGenomeNameInFormattedString(FormattedString):
@@ -145,6 +170,12 @@ def GetIndexingParamsFromSampleName(wildcards):
         return '--csi'
     else:
         return ''
+    
+def get_filled_path_from_contrast(wildcards, formatted_string):
+    # Find the first row where 'ContrastName' matches wildcards.contrast
+    row = contrasts_df[contrasts_df['ContrastName'] == wildcards.contrast].iloc[0]
+    # Fill the formatted string with the 'STARGenomeName' from the found row
+    return formatted_string.format(GenomeName=row['STARGenomeName'])
 
 def GetMemForSuccessiveAttempts(*args, max_mb=48000):
     def ReturnMemMb(wildcards, attempt):

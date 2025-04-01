@@ -7,7 +7,6 @@ configfile: "config/config.yaml"
 
 include: "rules/common.py"
 
-
 wildcard_constraints:
     GenomeName = "|".join(STAR_genomes.index),
     sample = "|".join(AllSamples),
@@ -34,8 +33,10 @@ rule all:
         expand("SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.with_ss_scores.tsv.gz", GenomeName = samples['STARGenomeName'].unique()),
         expand("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.sorted.bed.gz", GenomeName = samples['STARGenomeName'].unique(), Metric = ["JuncCounts", "PSI", "PSI_ByMax", "PSIDenom", "PSI_ByMaxDenom"]),
         expand("SplicingAnalysis/ClassifyJuncs/{GenomeName}/Leaf2_junction_classifications.txt", GenomeName = samples['STARGenomeName'].unique()),
-        expand("results/{contrast}.differential_splicing.txt", contrast=config["contrast_names"]) if config["contrast_names"] else [],
-        expand("results/{contrast}.differential_expression.txt", contrast=config["contrast_names"]) if config["contrast_names"] else []
+        expand("SplicingAnalysis/differential_splicing/{contrast}/", contrast=contrasts),
+        expand("differential_expression/{contrast}/results.tsv.gz", contrast=contrasts),
+        "Multiqc",
+        # expand("QC/QualimapRnaseq/{sample}", sample=AllSamples),
         # config['GenomesPrefix'] + "GRCh38_GencodeRelease44Comprehensive/Reference.Transcripts.colored.bed.gz",
         # expand("featureCounts/GRCh38_GencodeRelease44Comprehensive/{Strandedness}.Counts.txt", Strandedness=samples['Strandedness'].unique())
 

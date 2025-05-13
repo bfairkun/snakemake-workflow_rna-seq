@@ -117,8 +117,8 @@ PairedEndSamples_wildcards_regex = wildcard_constraints_from_list(samples_Paired
 
 # differential splicing and expression contrasts
 if config["contrast_group_files_prefix"]:
-    contrasts, = glob_wildcards("config/contrast_group_files/{contrast}.txt")
-    contrast_group_files_list = [os.path.join("config/contrast_group_files/", f"{contrast}.txt") for contrast in contrasts]
+    contrasts, = glob_wildcards(f"{config['contrast_group_files_prefix']}{{contrast}}.txt")
+    contrast_group_files_list = [os.path.join(config["contrast_group_files_prefix"], f"{contrast}.txt") for contrast in contrasts]
     contrasts_df_list = []
     for contrast, file in zip(contrasts, contrast_group_files_list):
         df = pd.read_csv(file, sep="\t", header=None, names=["sample", "Group"])

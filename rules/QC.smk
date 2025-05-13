@@ -32,6 +32,7 @@ rule MultiQC:
     log: "logs/Multiqc.log"
     output:
         directory("Multiqc")
+    localrule: True
     shell:
         """
         multiqc -f -o {output}/ {input} &> {log}

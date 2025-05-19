@@ -13,7 +13,7 @@ STAR_genomes: config/STAR_Genome_List.tsv
 GenomesPrefix: "/project2/yangili1/bjf79/ReferenceGenomes/"
 
 # contrast group_files for differential splicing and differential expression should match {contrast_group_files_prefix}{ContrastName}.txt
-contrast_group_files_prefix: config/contrast_groups/
+contrast_group_files_prefix: 
 
 #Scratch dir for large temporary files
 scratch: "/scratch/midway2/bjf79/"

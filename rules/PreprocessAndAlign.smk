@@ -149,7 +149,7 @@ rule STAR_Align:
         GetSTARIndexDir = "/project2/yangili1/bjf79/ChromatinSplicingQTLs/code/ReferenceGenome/STARIndex/",
         readMapNumber = -1,
         ENCODE_params = "--outFilterType BySJout --outFilterMultimapNmax 20  --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000",
-        extra = "--twopassMode Basic"
+        extra = "--twopassMode Basic --outSAMattributes All"
     resources:
         tasks = 9,
         mem_mb = 48000,

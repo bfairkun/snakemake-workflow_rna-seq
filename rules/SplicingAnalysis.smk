@@ -185,30 +185,6 @@ rule Get5ssSeqs:
         zcat {input.basic} | awk -v OFS='\\t' -F'\\t' 'NR>1 {{print $1, $2, $3, $1"_"$2"_"$3"_"$6, ".", $6}}' | sort -u | awk -v OFS='\\t' -F'\\t'  '$6=="+" {{$2=$2-4; $3=$2+11; print $0}} $6=="-" {{$3=$3+3; $2=$3-11; print $0}}' | bedtools getfasta -tab -bed - -s -name -fi {input.fa} | grep -v 'N' > {output}
         """
 
-rule SpliceQ:
-    input:
-        bam = "Alignments/{sample}/Aligned.sortedByCoord.out.bam",
-        index = "Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
-        gtf = lambda wildcards: config['GenomesPrefix'] + samples.loc[wildcards.sample]['STARGenomeName'] + "/Reference.basic.gtf",
-    output:
-        "SplicingAnalysis/SpliceQ/{sample}.tsv.gz"
-    log:
-        "logs/SpliceQ/{sample}.log"
-    params:
-        "-c 0 -i"
-    threads:
-        4
-    shadow:
-        "shallow"
-    conda:
-        "../envs/spliceq.yml"
-    shell:
-        """
-        exec 2> {log}
-        tmpfile=$(mktemp -p . tmp.{wildcards.sample}.XXXXXXXX.txt)
-        SPLICE-q.py {params} -b {input.bam} -g {input.gtf} -p {threads} -o $tmpfile
-        gzip -c $tmpfile > {output}
-        """
 
 rule ConvertLeacfutterJuncNames_To_True_Bed_Coords:
     input:
@@ -269,3 +245,92 @@ rule leafcutter_ds_contrasts:
         mkdir -p {output}
         /software/R-3.4.3-el7-x86_64/bin/Rscript scripts/leafcutter/scripts/leafcutter_ds.R -p {threads} -o {output}/leaf {params.ExtraParams} {input.numers} {input.groupfile} &> {log}
         """
+
+rule SpliSER_IdentifySpliceSites:
+    input:
+        juncs = "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.with_ss_scores.tsv.gz",
+    output:
+        donors = temp("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/Donors.bed"),
+        acceptors = temp("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/Acceptors.bed"),
+    log:
+        "logs/SpliSER_IdentifySpliceSites/{GenomeName}.log"
+    conda:
+        "../envs/r_2.yml"
+    params:
+        threshold = 10
+    shell:
+        """
+        Rscript scripts/Collapse_SpliceSites.R {input.juncs} {output.donors} {output.acceptors} {params.threshold} &> {log}
+        """
+
+rule SpliSER_index_SpliceSites:
+    input:
+        bed = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.bed",
+    output:
+        bed = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.bed.gz",
+        index = touch("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.bed.gz.indexing_done"),
+    log:
+        "logs/index_SpliceSites/{GenomeName}.{DonorsOrAcceptors}.log"
+    wildcard_constraints:
+        DonorsOrAcceptors = "Donors|Acceptors"
+    params:
+        GetIndexingParamsFromGenomeName
+    shell:
+        """
+        (bgzip {input.bed} -c > {output.bed}) &> {log}
+        (tabix {params} -f -p bed {output.bed}) &>> {log} && touch {output.index}
+        """
+
+rule SpliSER_Count_Alpha_and_Beta2_ForAllSpliceSites:
+    """
+    Alpha is count of junction reads utilizing a splice site. Beta2 is count of junction reads that are mutually exclusive (spliced segment encompasses) the splice site.
+    """
+    input:
+        SpliceSites = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.bed.gz",
+        juncs = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc")
+    output:
+        Alpha = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Alpha.tsv",
+        Beta2 = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta2.tsv",
+    log:
+        "logs/SpliSER_Count_Alpha_and_Beta2_ForAllSpliceSites/{GenomeName}.{DonorsOrAcceptors}.log"
+    wildcard_constraints:
+        DonorsOrAcceptors = "Donors|Acceptors"
+    conda:
+        "../envs/pybedtools.yml"
+    resources:
+        mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
+    shell:
+        """
+        python scripts/SplisER_Count_Alpha_and_Beta2.py --SpliceSites {input.SpliceSites} --site_type {wildcards.DonorsOrAcceptors} --InputJuncs {input.juncs} --AlphaOut {output.Alpha} --Beta2Out {output.Beta2} &> {log}
+        """
+
+
+
+rule SpliSER_Making_Beta1_SAF:
+    """
+    Beta1 is count of intron retention reads over a splice site. To prevent mis-aligned junctions from being counted, I will add 3nt to each side around the splice site and count reads completely overlapping to any such regions later rule with featureCounts. Note that SAF is 1-based inclusive.
+    """
+    input:
+        SpliceSite = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{SpliceSite}.tsv.gz",
+        fai = config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai",
+    output:
+        SAF = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{SpliceSite}.saf",
+    shell:
+        """
+        zcat {input.SpliceSite} | awk -v OFS='\\t' -F'\\t' 'NR>1 {{print $1, $2-1, $2, $8, ".", $3}}' | bedtools sort -i - | bedtools slop -s -l 3 -r 2 -i - -g {input.fai} | awk -v OFS='\\t' -F'\\t' '{{print $4, $1, $2+1, $3, $6}}' > {output.SAF}
+        """
+
+# use rule featurecounts as SpliSER_Count_Beta1_ForAllSpliceSites_featureCounts with:
+#     input:
+#         bam = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
+#         index = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
+#         gtf = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{SpliceSite}.saf",
+#     output:
+#         counts = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{SpliceSite}.Beta1_{Strandedness}.Counts.txt",
+#         summary = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{SpliceSite}.Beta1_{Strandedness}.Counts.txt.summary",
+#     log:
+#         "logs/featureCounts/{GenomeName}.{Strandedness}.log"
+#     params:
+#         strand = lambda wildcards: {'FR':'-s 1', 'U':'-s 0', 'RF':'-s 2'}[wildcards.Strandedness],
+#         paired_flag = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads,
+#         extra = "-F SAF --fracOverlapFeature 1 -O"

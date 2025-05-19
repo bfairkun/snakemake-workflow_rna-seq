@@ -14,8 +14,8 @@ wildcard_constraints:
 
 include: "rules/PreprocessAndAlign.smk"
 include: "rules/IndexGenome.smk"
-include: "rules/SplicingAnalysis.smk"
 include: "rules/ExpressionAnalysis.smk"
+include: "rules/SplicingAnalysis.smk" #Contains rules inherited from ExpressionAnalysis.smk
 include: "rules/QC.smk"
 include: "rules/MakeBigwigs.smk"
 

@@ -18,10 +18,11 @@ rule featurecounts:
         "logs/featureCounts/{GenomeName}.{Strandedness}.log"
     params:
         strand = lambda wildcards: {'FR':'-s 1', 'U':'-s 0', 'RF':'-s 2'}[wildcards.Strandedness],
-        extra = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads
+        paired_flag = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads,
+        extra = ""
     shell:
         """
-        featureCounts {params.strand} {params.extra} -T {threads} --ignoreDup --primary -a {input.gtf} -o {output.counts} {input.bam} --maxMOp 100 &> {log}
+        featureCounts {params.strand} {params.paired_flag} {params.extra} -T {threads} --ignoreDup --primary -a {input.gtf} -o {output.counts} {input.bam} --maxMOp 100 &> {log}
         """
 
 use rule featurecounts as featurecounts_allUnstranded with:
@@ -41,7 +42,8 @@ use rule featurecounts as featurecounts_allUnstranded with:
         "logs/featureCounts/{GenomeName}.AllUnstranded.log"
     params:
         strand = '-s 0',
-        extra = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads
+        paired_flag = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads,
+        extra = ""
 
 rule edgeR_differential_expression:
     input:

@@ -23,10 +23,8 @@ rule all:
     input:
         "samples.SRA_accession_links_filled.tsv",
         expand("Alignments/{sample}/Aligned.sortedByCoord.out.bam",sample=AllSamples),
-        expand("SplicingAnalysis/juncfiles/{sample}.junccounts.tsv.gz", sample=AllSamples),
         "../output/QC/ReadCountsPerSamples.tsv",
         expand("bigwigs/unstranded/{sample}.bw", sample=AllSamples),
-        # "SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.tsv.gz",
         # "Multiqc",
         expand(config['GenomesPrefix'] + "{GenomeName}/STARIndex", GenomeName = samples['STARGenomeName'].unique()),
         expand("featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt", GenomeName = samples['STARGenomeName'].unique()),
@@ -36,8 +34,6 @@ rule all:
         expand("SplicingAnalysis/differential_splicing/{contrast}/", contrast=contrasts),
         expand("differential_expression/{contrast}/results.tsv.gz", contrast=contrasts),
         "Multiqc",
-        # expand("QC/QualimapRnaseq/{sample}", sample=AllSamples),
-        # config['GenomesPrefix'] + "GRCh38_GencodeRelease44Comprehensive/Reference.Transcripts.colored.bed.gz",
         # expand("featureCounts/GRCh38_GencodeRelease44Comprehensive/{Strandedness}.Counts.txt", Strandedness=samples['Strandedness'].unique())
 
 rule Gather_Fastp_Fastqs:

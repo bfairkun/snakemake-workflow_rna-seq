@@ -15,31 +15,6 @@ rule ExtractJuncs:
         (regtools junctions extract -m 20 -s {params.strand} {input.bam} > {output}) &> {log}
         """
 
-
-rule annotate_juncfiles:
-    """
-    this command breaks when gtf has trailing spaces, like in some NCBI gtfs
-    https://github.com/griffithlab/regtools/issues/92
-    """
-    input:
-        fa = FillGenomeNameInFormattedString(config['GenomesPrefix'] + "{GenomeName}/Reference.fa"),
-        fai = FillGenomeNameInFormattedString(config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai"),
-        gtf = FillGenomeNameInFormattedString(config['GenomesPrefix'] + "{GenomeName}/Reference.gtf"),
-        juncs = "SplicingAnalysis/juncfiles/{sample}.junc",
-    output:
-        counts = "SplicingAnalysis/juncfiles/{sample}.junccounts.tsv.gz"
-    log:
-        "logs/annotate_juncfiles/{sample}.log"
-    conda:
-        "../envs/regtools.yml"
-    resources:
-        mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
-    shell:
-        """
-        (regtools junctions annotate {input.juncs} {input.fa} {input.gtf} | awk -F'\\t' -v OFS='\\t' 'NR>1 {{$4=$1"_"$2"_"$3"_"$6; print $4, $5}}' | gzip - > {output.counts} ) &> {log}
-        """
-
-
 rule ConcatJuncFilesAndKeepUniq:
     input:
         ExpandAllSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc"),
@@ -56,7 +31,9 @@ rule ConcatJuncFilesAndKeepUniq:
 
 rule AnnotateConcatedUniqJuncFile_basic:
     """
-    note that regtools end coordinate is off by one. The right coordinate should be adjusted down 1 for proper viewing of junc in IGV
+    note that regtools end coordinate is off by one. The right coordinate should be adjusted down 1 for proper viewing of junc in IGV.
+    This command breaks when gtf has trailing spaces, like in some NCBI gtfs
+    https://github.com/griffithlab/regtools/issues/92
     """
     input:
         junc = "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.junc.gz",

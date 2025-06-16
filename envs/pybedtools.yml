@@ -43,6 +43,7 @@ dependencies:
   - openssl=3.5.0=h7b32b05_1
   - pandas=2.2.3=py312hf9745cd_3
   - pip=25.1=pyhc872135_2
+  - psutil=7.0.0=py312h66e93f0_0
   - pybedtools=0.12.0=py312h5e9d817_0
   - pysam=0.23.0=py312h47d5410_0
   - python=3.12.10=h9e4cc4f_0_cpython

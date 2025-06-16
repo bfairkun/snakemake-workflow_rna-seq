@@ -1,3 +1,6 @@
+wildcard_constraints:
+    DonorsOrAcceptors = "Donors|Acceptors",
+
 rule ExtractJuncs:
     input:
         bam = "Alignments/{sample}/Aligned.sortedByCoord.out.bam",
@@ -14,7 +17,6 @@ rule ExtractJuncs:
         """
         (regtools junctions extract -m 20 -s {params.strand} {input.bam} > {output}) &> {log}
         """
-
 
 rule annotate_juncfiles:
     """
@@ -228,7 +230,10 @@ rule leafcutter_ds_contrasts:
         groupfile = lambda wildcards: os.path.abspath(config['contrast_group_files_prefix'] + "{contrast}.txt"),
         numers = lambda wildcards: get_filled_path_from_contrast(wildcards, "SplicingAnalysis/leafcutter/{GenomeName}/clustering/leafcutter_perind_numers.counts.gz"),
     output:
-        directory("SplicingAnalysis/differential_splicing/{contrast}/")
+        outputdir = directory("SplicingAnalysis/differential_splicing/{contrast}/"),
+        effect_sizes = "SplicingAnalysis/differential_splicing/{contrast}/leaf_effect_sizes.txt",
+        pvalues = "SplicingAnalysis/differential_splicing/{contrast}/leaf_cluster_significance.txt",
+
     threads: 4
     wildcard_constraints:
         treatment = "|".join(contrasts)
@@ -236,14 +241,35 @@ rule leafcutter_ds_contrasts:
         ntasks = 5,
         mem_mb = 24000
     params:
-        Prefix = "MazinLeafcutterAnalysis/Contrasts_ds/",
         ExtraParams = "-i 2 -g 2"
     log:
         "logs/leafcutter_ds/{contrast}.log"
     shell:
         """
-        mkdir -p {output}
-        /software/R-3.4.3-el7-x86_64/bin/Rscript scripts/leafcutter/scripts/leafcutter_ds.R -p {threads} -o {output}/leaf {params.ExtraParams} {input.numers} {input.groupfile} &> {log}
+        mkdir -p {output.outputdir}
+        /software/R-3.4.3-el7-x86_64/bin/Rscript scripts/leafcutter/scripts/leafcutter_ds.R -p {threads} -o {output.outputdir}/leaf {params.ExtraParams} {input.numers} {input.groupfile} &> {log}
+        """
+
+rule tidy_leafcutter_differentialSplicing:
+    """
+    Join effect sizes, p values, and intron info into a single table.
+    """
+    input:
+        intron_info = lambda wildcards: get_filled_path_from_contrast(wildcards, "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.with_ss_scores.tsv.gz"),
+        Classifications = lambda wildcards: get_filled_path_from_contrast(wildcards, "SplicingAnalysis/ClassifyJuncs/{GenomeName}/Leaf2_junction_classifications.txt"),
+        effect_sizes = "SplicingAnalysis/differential_splicing/{contrast}/leaf_effect_sizes.txt",
+        pvalues = "SplicingAnalysis/differential_splicing/{contrast}/leaf_cluster_significance.txt",
+    output:
+        "SplicingAnalysis/differential_splicing_tidy/{contrast}/Results.tsv.gz",
+    log:
+        "logs/tidy_leafcutter_differentialSplicing/{contrast}.log"
+    resources:
+        mem_mb = 48000
+    conda:
+        "../envs/r_2.yml"
+    shell:
+        """
+        Rscript scripts/leafcutter_tidyDifferentialSplicingResults.R {input.intron_info} {input.Classifications} {input.effect_sizes} {input.pvalues} {output} &> {log}
         """
 
 rule SpliSER_IdentifySpliceSites:
@@ -271,8 +297,6 @@ rule SpliSER_index_SpliceSites:
         index = touch("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.bed.gz.indexing_done"),
     log:
         "logs/index_SpliceSites/{GenomeName}.{DonorsOrAcceptors}.log"
-    wildcard_constraints:
-        DonorsOrAcceptors = "Donors|Acceptors"
     params:
         GetIndexingParamsFromGenomeName
     shell:
@@ -289,48 +313,122 @@ rule SpliSER_Count_Alpha_and_Beta2_ForAllSpliceSites:
         SpliceSites = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.bed.gz",
         juncs = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc")
     output:
-        Alpha = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Alpha.tsv",
-        Beta2 = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta2.tsv",
+        Alpha = temporary("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Alpha.bed.gz"),
+        Beta2 = temporary("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta2.bed.gz"),
     log:
         "logs/SpliSER_Count_Alpha_and_Beta2_ForAllSpliceSites/{GenomeName}.{DonorsOrAcceptors}.log"
-    wildcard_constraints:
-        DonorsOrAcceptors = "Donors|Acceptors"
     conda:
         "../envs/pybedtools.yml"
     resources:
-        mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
+        mem_mb = 48000
     shell:
         """
-        python scripts/SplisER_Count_Alpha_and_Beta2.py --SpliceSites {input.SpliceSites} --site_type {wildcards.DonorsOrAcceptors} --InputJuncs {input.juncs} --AlphaOut {output.Alpha} --Beta2Out {output.Beta2} &> {log}
+        python -u scripts/SplisER_Count_Alpha_and_Beta2.py --SpliceSites {input.SpliceSites} --site_type {wildcards.DonorsOrAcceptors} --InputJuncs {input.juncs} --AlphaOut {output.Alpha} --Beta2Out {output.Beta2} &> {log}
         """
-
-
 
 rule SpliSER_Making_Beta1_SAF:
     """
     Beta1 is count of intron retention reads over a splice site. To prevent mis-aligned junctions from being counted, I will add 3nt to each side around the splice site and count reads completely overlapping to any such regions later rule with featureCounts. Note that SAF is 1-based inclusive.
     """
     input:
-        SpliceSite = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{SpliceSite}.tsv.gz",
+        SpliceSite = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.bed.gz",
         fai = config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai",
     output:
-        SAF = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{SpliceSite}.saf",
+        SAF = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.saf",
     shell:
         """
-        zcat {input.SpliceSite} | awk -v OFS='\\t' -F'\\t' 'NR>1 {{print $1, $2-1, $2, $8, ".", $3}}' | bedtools sort -i - | bedtools slop -s -l 3 -r 2 -i - -g {input.fai} | awk -v OFS='\\t' -F'\\t' '{{print $4, $1, $2+1, $3, $6}}' > {output.SAF}
+        zcat {input.SpliceSite} | awk -v OFS='\\t' -F'\\t' 'NR>1 {{print $1, $2-1, $2, $4, $5, $6}}' | bedtools sort -i - | bedtools slop -s -l 3 -r 2 -i - -g {input.fai} | awk -v OFS='\\t' -F'\\t' '{{print $4, $1, $2+1, $3, $6, $5}}' > {output.SAF}
         """
 
-# use rule featurecounts as SpliSER_Count_Beta1_ForAllSpliceSites_featureCounts with:
-#     input:
-#         bam = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
-#         index = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
-#         gtf = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{SpliceSite}.saf",
-#     output:
-#         counts = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{SpliceSite}.Beta1_{Strandedness}.Counts.txt",
-#         summary = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{SpliceSite}.Beta1_{Strandedness}.Counts.txt.summary",
-#     log:
-#         "logs/featureCounts/{GenomeName}.{Strandedness}.log"
-#     params:
-#         strand = lambda wildcards: {'FR':'-s 1', 'U':'-s 0', 'RF':'-s 2'}[wildcards.Strandedness],
-#         paired_flag = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads,
-#         extra = "-F SAF --fracOverlapFeature 1 -O"
+use rule featurecounts as SpliSER_Count_Beta1_ForAllSpliceSites_featureCounts with:
+    input:
+        bam = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
+        index = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
+        gtf = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.saf",
+    output:
+        counts = temporary("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta1_{Strandedness}.Counts.txt"),
+        summary = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta1_{Strandedness}.Counts.txt.summary",
+    log:
+        "logs/featureCounts/{GenomeName}.{DonorsOrAcceptors}.{Strandedness}.log"
+    params:
+        strand = lambda wildcards: {'FR':'-s 1', 'U':'-s 0', 'RF':'-s 2'}[wildcards.Strandedness],
+        paired_flag = UsePairedEndFeatureCountsIfMixingSingleAndPairedReads,
+        extra = "-F SAF --fracOverlapFeature 1 -O"
+
+rule SplisER_Beta1CountsToBed:
+    """
+    Need to aggregate all Beta1 counts from featureCounts outputs (for each possible strandedness, given the possible strandedness for all samples in the GenomeName) into a single bed file, while correcting sample names since featureCounts uses bam file paths as sample names.
+    """
+    input:
+        counts = lambda wildcards: expand("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta1_{Strandedness}.Counts.txt", Strandedness = samples.loc[samples['STARGenomeName'] == wildcards.GenomeName, 'Strandedness'].unique(), GenomeName = wildcards.GenomeName, DonorsOrAcceptors = wildcards.DonorsOrAcceptors),
+        Example_bed = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Alpha.bed.gz",
+    output:
+        bed = temporary("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta1.bed.gz"),
+    log:
+        "logs/SplisER_Beta1CountsToBed/{GenomeName}.{DonorsOrAcceptors}.log"
+    conda:
+        "../envs/r_2.yml"
+    resources:
+        mem_mb = 48000
+    shell:
+        """
+        Rscript scripts/SplisER_AggregateFeatureCountsBeta1Output_ToBed.R {output.bed} {input.Example_bed} {input.counts}  &> {log}
+        """
+
+rule SplisER_Count_SSE:
+    input:
+        Alpha = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Alpha.sorted.bed.gz",
+        Beta1 = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta1.sorted.bed.gz",
+        Beta2 = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta2.sorted.bed.gz",
+    output:
+        SSE = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.SSE.bed.gz",
+    log:
+        "logs/SplisER_Count_SSE/{GenomeName}.{DonorsOrAcceptors}.log"
+    conda:
+        "../envs/r_2.yml"
+    resources:
+        mem_mb = 48000
+    shell:
+        """
+        Rscript scripts/SpliceER_FilterAndCalculateSSE.R {output.SSE} {input.Alpha} {input.Beta1} {input.Beta2} &> {log}
+        """
+
+use rule bgzip_PSI_bed as SplisER_SortAndBgzip with:
+    input:
+        bed = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.{CountType}.bed.gz",
+    output:
+        bed = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.{CountType}.sorted.bed.gz",
+        index = touch("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.{CountType}.sorted.bed.gz.indexing_done"),
+    params:
+        GetIndexingParamsFromGenomeName,
+    log:
+        "logs/SplisER_SortAndBgzip/{GenomeName}.{CountType}.{DonorsOrAcceptors}.log"
+
+rule SplisER_SpliceSiteUsageContrast_DESeq2:
+    input:
+        Alpha = lambda wildcards: get_filled_path_from_contrast(wildcards, "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{{DonorsOrAcceptors}}.Alpha.sorted.bed.gz"),
+        Beta1 = lambda wildcards: get_filled_path_from_contrast(wildcards, "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{{DonorsOrAcceptors}}.Beta1.sorted.bed.gz"),
+        Beta2 = lambda wildcards: get_filled_path_from_contrast(wildcards, "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{{DonorsOrAcceptors}}.Beta2.sorted.bed.gz"),
+        groupfile = lambda wildcards: os.path.abspath(config['contrast_group_files_prefix'] + "{contrast}.txt"),
+    output:
+        results = "SplicingAnalysis/differential_splice_site_SplisER/{contrast}/{DonorsOrAcceptors}.DESeq2.results.tsv.gz",
+    log:
+        "logs/SplisER_SpliceSiteUsageContrast_DESeq2/{contrast}.{DonorsOrAcceptors}.log"
+    conda:
+        "../envs/r_2.yml"
+    resources:
+        mem_mb = 48000
+    shell:
+        """
+        Rscript scripts/SpliceER_SpliceSiteUsageContrast_DESeq2.R {input.groupfile} {input.Alpha} {input.Beta1} {input.Beta2} {output.results} &> {log}
+        """
+#rna-seq/SplicingAnalysis/differential_splice_site_SplisER/X11_DMSO_v_CP3PlusBPN316/Donors.DESeq2.results.tsv.gz
+
+rule SpliceER_GatherResults:
+    input:
+        expand(
+            "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.{CountType}.sorted.bed.gz",
+            DonorsOrAcceptors = ["Donors", "Acceptors"],
+            CountType = ["Alpha", "Beta1", "Beta2", "SSE"],
+            GenomeName = samples['STARGenomeName'].unique()
+        ),

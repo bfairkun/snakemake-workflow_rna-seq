@@ -58,7 +58,9 @@ rule ConcatJuncFilesAndKeepUniq:
 
 rule AnnotateConcatedUniqJuncFile_basic:
     """
-    note that regtools end coordinate is off by one. The right coordinate should be adjusted down 1 for proper viewing of junc in IGV
+    note that regtools end coordinate is off by one. The right coordinate should be adjusted down 1 for proper viewing of junc in IGV.
+    This command breaks when gtf has trailing spaces, like in some NCBI gtfs
+    https://github.com/griffithlab/regtools/issues/92
     """
     input:
         junc = "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.junc.gz",

@@ -23,7 +23,6 @@ rule all:
     input:
         "samples.SRA_accession_links_filled.tsv",
         expand("Alignments/{sample}/Aligned.sortedByCoord.out.bam",sample=AllSamples),
-        expand("SplicingAnalysis/juncfiles/{sample}.junccounts.tsv.gz", sample=AllSamples),
         "../output/QC/ReadCountsPerSamples.tsv",
         expand("bigwigs/unstranded/{sample}.bw", sample=AllSamples),
         expand("featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt", GenomeName = samples['STARGenomeName'].unique()),

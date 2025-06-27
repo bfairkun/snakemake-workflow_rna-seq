@@ -284,6 +284,8 @@ rule SpliSER_IdentifySpliceSites:
         "logs/SpliSER_IdentifySpliceSites/{GenomeName}.log"
     conda:
         "../envs/r_2.yml"
+    resources:
+        mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
     params:
         threshold = 10
     shell:

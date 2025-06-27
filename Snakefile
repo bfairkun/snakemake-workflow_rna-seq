@@ -32,6 +32,12 @@ rule all:
         expand("SplicingAnalysis/differential_splicing_tidy/{contrast}/Results.tsv.gz", contrast=contrasts),
         expand("differential_expression/{contrast}/results.tsv.gz", contrast=contrasts),
         "Multiqc",
+        expand(
+            "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.{CountType}.sorted.bed.gz",
+            DonorsOrAcceptors = ["Donors", "Acceptors"],
+            CountType = ["Alpha", "Beta1", "Beta2", "SSE"],
+            GenomeName = samples['STARGenomeName'].unique()
+        ),
         # config['GenomesPrefix'] + "GRCh38_GencodeRelease44Comprehensive/Reference.Transcripts.colored.bed.gz",
         # expand("featureCounts/GRCh38_GencodeRelease44Comprehensive/{Strandedness}.Counts.txt", Strandedness=samples['Strandedness'].unique())
 

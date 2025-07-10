@@ -89,6 +89,8 @@ rule Add_splice_site_scores_to_regtools_annotate:
         "../scripts/leafcutter2/scripts/Reformat_gtf.conda_env.yml"
     log:
         "logs/Add_splice_site_scores_to_regtools_annotate.{GenomeName}.log"
+    resources:
+        mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
     shell:
         """
         python scripts/Add_SS_To_RegtoolsAnnotate.py \
@@ -315,7 +317,7 @@ rule SpliSER_Count_Alpha_and_Beta2_ForAllSpliceSites:
     """
     input:
         SpliceSites = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.bed.gz",
-        juncs = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc")
+        juncs = ExpandAllSTARSamplesInFormatStringFromGenomeNameWildcard("SplicingAnalysis/juncfiles/{sample}.junc")
     output:
         Alpha = temporary("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Alpha.bed.gz"),
         Beta2 = temporary("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta2.bed.gz"),
@@ -346,8 +348,8 @@ rule SpliSER_Making_Beta1_SAF:
 
 use rule featurecounts as SpliSER_Count_Beta1_ForAllSpliceSites_featureCounts with:
     input:
-        bam = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
-        index = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
+        bam = ExpandAllSTARSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
+        index = ExpandAllSTARSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
         gtf = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.saf",
     output:
         counts = temporary("SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.Beta1_{Strandedness}.Counts.txt"),

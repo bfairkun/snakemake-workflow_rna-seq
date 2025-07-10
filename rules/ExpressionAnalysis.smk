@@ -1,8 +1,8 @@
 
 rule featurecounts:
     input:
-        bam = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
-        index = ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
+        bam = ExpandAllSTARSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
+        index = ExpandAllSTARSamplesInFormatStringFromGenomeNameAndStrandWildcards("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf",
     output:
         counts = "featureCounts/{GenomeName}/{Strandedness}.Counts.txt",
@@ -12,7 +12,7 @@ rule featurecounts:
     conda:
         "../envs/subread_featureCounts.yml"
     resources:
-        mem_mb = 12000,
+        mem_mb = GetMemForSuccessiveAttempts(24000, 48000),
         tasks = 9,
     log:
         "logs/featureCounts/{GenomeName}.{Strandedness}.log"
@@ -27,8 +27,8 @@ rule featurecounts:
 
 use rule featurecounts as featurecounts_allUnstranded with:
     input:
-        bam = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
-        index = ExpandAllSamplesInFormatStringFromGenomeNameWildcard("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
+        bam = ExpandAllSTARSamplesInFormatStringFromGenomeNameWildcard("Alignments/{sample}/Aligned.sortedByCoord.out.bam"),
+        index = ExpandAllSTARSamplesInFormatStringFromGenomeNameWildcard("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
         gtf = config['GenomesPrefix'] + "{GenomeName}/Reference.basic.gtf",
     output:
         counts = "featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt",

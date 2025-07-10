@@ -110,7 +110,8 @@ samples_PairedEnd = samples[samples['Library_Layout']=='PAIRED']['sample']
 samples_from_links = samples.loc[samples["R1"].isna() & samples["R1_link"].notna()]['sample']
 samples_from_local = samples.loc[samples["R1"].notna()]['sample']
 
-samples_ForSTAR = samples.loc[samples['Aligner']=='STAR']['sample']
+samples_ForSTAR_df = samples.loc[samples['Aligner']=='STAR']
+samples_ForSTAR = samples_ForSTAR_df['sample'].unique()
 
 SingleEndSamples_wildcards_regex = wildcard_constraints_from_list(samples_SingleEnd)
 PairedEndSamples_wildcards_regex = wildcard_constraints_from_list(samples_PairedEnd)
@@ -147,9 +148,19 @@ def ExpandAllSamplesInFormatStringFromGenomeNameWildcard(FormattedString):
         return expand(FormattedString, sample=samples.loc[samples['STARGenomeName']==wildcards.GenomeName]['sample'].unique())
     return InputFunctionToReturn
 
+def ExpandAllSTARSamplesInFormatStringFromGenomeNameWildcard(FormattedString):
+    def InputFunctionToReturn(wildcards):
+        return expand(FormattedString, sample=samples_ForSTAR_df.loc[(samples_ForSTAR_df['STARGenomeName']==wildcards.GenomeName)]['sample'].unique())
+    return InputFunctionToReturn
+
 def ExpandAllSamplesInFormatStringFromGenomeNameAndStrandWildcards(FormattedString):
     def InputFunctionToReturn(wildcards):
         return expand(FormattedString, sample=samples.loc[(samples['STARGenomeName']==wildcards.GenomeName) & (samples['Strandedness']==wildcards.Strandedness)]['sample'].unique())
+    return InputFunctionToReturn
+
+def ExpandAllSTARSamplesInFormatStringFromGenomeNameAndStrandWildcards(FormattedString):
+    def InputFunctionToReturn(wildcards):
+        return expand(FormattedString, sample=samples_ForSTAR_df.loc[(samples_ForSTAR_df['STARGenomeName']==wildcards.GenomeName) & (samples_ForSTAR_df['Strandedness']==wildcards.Strandedness)]['sample'].unique())
     return InputFunctionToReturn
 
 def GetIndexSuffix(wildcards):

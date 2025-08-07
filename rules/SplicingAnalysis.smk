@@ -226,7 +226,7 @@ rule leafcutter2_ClassifyJuncs_ClusterPerInd:
         mem_mb = 16000
     shell:
         """
-        python scripts/leafcutter2/scripts/SpliceJunctionClassifier.py -c {input.junclist} -G {input.fa} -A {input.gtf} -v -r {output.outdir} &> {log}
+        python scripts/leafcutter2_chao/scripts/ForwardSpliceJunctionClassifier.py -c {input.junclist} -G {input.fa} -A {input.gtf} -v -r {output.outdir} &> {log}
         """
 
 rule leafcutter_ds_contrasts:

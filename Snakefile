@@ -18,6 +18,7 @@ include: "rules/ExpressionAnalysis.smk"
 include: "rules/SplicingAnalysis.smk" #Contains rules inherited from ExpressionAnalysis.smk
 include: "rules/QC.smk"
 include: "rules/MakeBigwigs.smk"
+include: "rules/PreparePyGenomeTracksPlots.smk"
 
 rule all:
     input:

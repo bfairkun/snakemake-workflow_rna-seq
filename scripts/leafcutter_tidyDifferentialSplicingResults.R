@@ -11,7 +11,7 @@
 # Use hard coded arguments in interactive R session, else use command line args
 if(interactive()){
     args <- scan(text=
-                 "rna-seq/SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.with_ss_scores.tsv.gz rna-seq/SplicingAnalysis/ClassifyJuncs/GRCh38_GencodeRelease44Comprehensive/Leaf2_junction_classifications.txt rna-seq/SplicingAnalysis/differential_splicing/X11_DMSO_v_CP3PlusBPN1000/leaf_effect_sizes.txt rna-seq/SplicingAnalysis/differential_splicing/X11_DMSO_v_CP3PlusBPN1000/leaf_cluster_significance.txt rna-seq/SplicingAnalysis/differential_splicing_tidy/X11_DMSO_v_CP3PlusBPN1000/Results.tsv.gz", what='character')
+                 "rna_seq/SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.with_ss_scores.tsv.gz rna_seq/SplicingAnalysis/ClassifyJuncs/GRCh38_GencodeRelease44Comprehensive/Leaf2_junction_classifications.txt rna_seq/SplicingAnalysis/differential_splicing/Colombo.SM67_and_SMG7_vs_Scramble/leaf_effect_sizes.txt rna_seq/SplicingAnalysis/differential_splicing/Colombo.SM67_and_SMG7_vs_Scramble/leaf_cluster_significance.txt scratch/Results.tsv.gz", what='character')
 } else{
     args <- commandArgs(trailingOnly=TRUE)
 }
@@ -36,8 +36,8 @@ Joined <- effect_sizes %>%
     inner_join(significance, by=c("cluster")) %>%
     mutate(strand = str_replace(cluster, ".+?([+-])$", "\\1")) %>%
     inner_join(junctions, by=c("chrom", "start", "end", "strand")) %>%
-    mutate(Intron_coord = str_glue("{chrom}:{start}-{end}")) %>%
-    left_join(
+    mutate(Intron_coord = str_glue("{chrom}:{start}-{end-1}")) %>%
+    inner_join(
         classifications,
         by=c("Intron_coord")
     )

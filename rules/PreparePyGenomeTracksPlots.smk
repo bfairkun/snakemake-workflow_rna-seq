@@ -32,10 +32,10 @@ rule generate_all_samples_bigwig_table:
         output_prefix = output[0].split("Plot_contrasts")[0]
 
         df = contrasts_df.copy()
-        df["sample"] = df.apply(lambda row: f"{row['sample']}.{row['Group']}.{row['ContrastName']}", axis=1)
         df["bigwigPath"] = df.apply(
-            lambda row: os.path.join(output_prefix, f"bigwigs/unstranded/{row['sample'].split('.')[0]}.bw"), axis=1
+            lambda row: os.path.join(output_prefix, f"bigwigs/unstranded/{row['sample']}.bw"), axis=1
         )
+        df["sample"] = df.apply(lambda row: f"{row['sample']}.{row['Group']}.{row['ContrastName']}", axis=1)
         df["Group_label"] = df.apply(lambda row: f"{row['Group']}.{row['ContrastName']}", axis=1)
         df["strand"] = "."
         out_df = df[["sample", "bigwigPath", "Group_label", "strand"]]

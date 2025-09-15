@@ -80,11 +80,11 @@ def main(args=None):
                 else:
                     five_ss_seq = get_sequence(fasta, chrom, end-7, end+4, strand)
 
-                # Extract 3'ss sequence (-10 to 0)
+                # Extract 3'ss sequence (-10 to +4)
                 if strand == '+':
-                    three_ss_seq = get_sequence(fasta, chrom, end-10, end, strand)
+                    three_ss_seq = get_sequence(fasta, chrom, end-10, end+4, strand)
                 else:
-                    three_ss_seq = get_sequence(fasta, chrom, start, start+10, strand)
+                    three_ss_seq = get_sequence(fasta, chrom, start-4, start+10, strand)
 
                 # Write to output file in BED6 format
                 name = f"{intron.name}|5'ss:{five_ss_seq}|3'ss:{three_ss_seq}"

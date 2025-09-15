@@ -29,13 +29,14 @@ def parse_args(args=None):
     parser.add_argument('--reference', required=True, help="Reference fasta file")
     parser.add_argument('--introns', required=True, help="Annotated introns with splice site sequences file")
     parser.add_argument('--output', required=True, help="Output file")
+    parser.add_argument('--nrows', type=int, default=None, help="Number of rows to read from input file (optional)")
     return parser.parse_args(args)
 
 def main(args=None):
     args = parse_args(args)
 
     # Read input files
-    annotated_junctions = pd.read_csv(args.input, sep='\t')
+    annotated_junctions = pd.read_csv(args.input, sep='\t', nrows=args.nrows)
     introns_with_ss = parse_introns_with_ss(args.introns)
 
     # Create PWMs for 5'ss and 3'ss
@@ -51,7 +52,7 @@ def main(args=None):
     annotated_junctions['5ss_seq'] = annotated_junctions.apply(
         lambda row: get_sequence(fasta, row['chrom'], row['end']-8, row['end']+3, row['strand']) if row['strand'] == '-' else get_sequence(fasta, row['chrom'], row['start']-4, row['start']+7, row['strand']), axis=1)
     annotated_junctions['3ss_seq'] = annotated_junctions.apply(
-        lambda row: get_sequence(fasta, row['chrom'], row['start'], row['start']+10, row['strand']) if row['strand'] == '-' else get_sequence(fasta, row['chrom'], row['end']-11, row['end']-1, row['strand']), axis=1)
+        lambda row: get_sequence(fasta, row['chrom'], row['start']-4, row['start']+10, row['strand']) if row['strand'] == '-' else get_sequence(fasta, row['chrom'], row['end']-11, row['end']+3, row['strand']), axis=1)
 
     annotated_junctions['5ss_score'] = annotated_junctions['5ss_seq'].apply(lambda seq: pssm_5ss.calculate(seq))
     annotated_junctions['3ss_score'] = annotated_junctions['3ss_seq'].apply(lambda seq: pssm_3ss.calculate(seq))
@@ -64,6 +65,6 @@ def main(args=None):
 
 if __name__ == "__main__":
     if hasattr(sys, 'ps1'):
-        main("--input rna_seq/SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.tsv.gz --reference /project2/yangili1/bjf79/ReferenceGenomes/GRCh38_GencodeRelease44Comprehensive/Reference.fa --introns /project2/yangili1/bjf79/ReferenceGenomes/GRCh38_GencodeRelease44Comprehensive/Reference.Introns.bed.gz --output scratch/GenomeName.uniq.annotated.with_ss_scores.tsv.gz".split(' '))
+        main("--input rna-seq/SplicingAnalysis/ObservedJuncsAnnotations/GRCh38_GencodeRelease44Comprehensive.uniq.annotated.tsv.gz --reference /project2/yangili1/bjf79/ReferenceGenomes/GRCh38_GencodeRelease44Comprehensive/Reference.fa --introns /project2/yangili1/bjf79/ReferenceGenomes/GRCh38_GencodeRelease44Comprehensive/Reference.Introns.bed.gz --output scratch/GenomeName.uniq.annotated.with_ss_scores.tsv.gz --nrows 10000".split(' '))
     else:
         main()

@@ -60,3 +60,25 @@ rule edgeR_differential_expression:
         """
         Rscript scripts/BasicDifferentialExpression_edgeR.R {input.counts} {input.groupfile} {output.results} {output.plots} &> {log}
         """
+
+rule ExpressionMatrix:
+    input:
+        counts = "featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt",
+    output:
+        tpm = "ExpressionMatrices/{GenomeName}/log2TPM.bed",
+        cpm = "ExpressionMatrices/{GenomeName}/log2TMM_CPM.bed",
+        filtered_cpm = "ExpressionMatrices/{GenomeName}/log2Filtered_TMM_CPM.bed",
+    conda:
+        "../envs/rnanorm.yaml"
+    log:
+        "logs/ExpressionMatrix/{GenomeName}.log"
+    params:
+        sample_rename_regex = "'.+\/(.+?)\/Aligned\.sortedByCoord\.out\.bam'",
+        extra = "--pseudocount 0.1"
+    resources:
+        mem_mb = 16000,
+        tasks = 1,
+    shell:
+        """
+        python scripts/CountsToExpressionMatrix.py -i {input.counts} --log2TPM_Matrix_bed {output.tpm} --log2TMM_Normalized_CPM_Matrix_bed {output.cpm} --log2Filtered_TMM_Normalized_CPM_Matrix_bed {output.filtered_cpm} --sample_rename_regex {params.sample_rename_regex} {params.extra} &> {log}
+        """

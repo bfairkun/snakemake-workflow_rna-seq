@@ -138,7 +138,7 @@ rule Extract_introns:
     log:
         "logs/Extract_introns/{GenomeName}.log"
     conda:
-        "../scripts/leafcutter2/scripts/Reformat_gtf.conda_env.yml"
+        "../envs/bio_python_tools.yml"
     params:
         tabixParams = GetIndexingParamsFromGenomeName
     shell:

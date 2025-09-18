@@ -3,7 +3,7 @@
 	url = git@github.com:davidaknowles/leafcutter.git
 [submodule "scripts/leafcutter2"]
 	path = scripts/leafcutter2
-	url = git@github.com:bfairkun/leafcutter2.git
+	url = git@github.com:bfairkun/leafcutter2_ben.git
 [submodule "scripts/leafcutter2_chao"]
 	path = scripts/leafcutter2_chao
 	url = git@github.com:archieboo/leafcutter2.git

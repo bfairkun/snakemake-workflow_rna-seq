@@ -39,6 +39,7 @@ rule all:
             CountType = ["Alpha", "Beta1", "Beta2", "SSE"],
             GenomeName = samples['STARGenomeName'].unique()
         ),
+        expand(config['GenomesPrefix'] + "{GenomeName}/Reference.igv.genome.json", GenomeName = samples['STARGenomeName'].unique()),
         # config['GenomesPrefix'] + "GRCh38_GencodeRelease44Comprehensive/Reference.Transcripts.colored.bed.gz",
         # expand("featureCounts/GRCh38_GencodeRelease44Comprehensive/{Strandedness}.Counts.txt", Strandedness=samples['Strandedness'].unique())
 

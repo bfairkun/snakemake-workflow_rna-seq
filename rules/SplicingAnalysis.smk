@@ -245,13 +245,14 @@ rule leafcutter_ds_contrasts:
         ntasks = 5,
         mem_mb = 24000
     params:
-        ExtraParams = "-i 2 -g 2"
+        ExtraParams = "",
+        MinGroupSize = min_samples_per_group_for_contrast
     log:
         "logs/leafcutter_ds/{contrast}.log"
     shell:
         """
         mkdir -p {output.outputdir}
-        /software/R-3.4.3-el7-x86_64/bin/Rscript scripts/leafcutter/scripts/leafcutter_ds.R -p {threads} -o {output.outputdir}/leaf {params.ExtraParams} {input.numers} {input.groupfile} &> {log}
+        /software/R-3.4.3-el7-x86_64/bin/Rscript scripts/leafcutter/scripts/leafcutter_ds.R -p {threads} -o {output.outputdir}/leaf {params.ExtraParams} -i {params.MinGroupSize} -g {params.MinGroupSize} {input.numers} {input.groupfile} &> {log}
         """
 
 rule tidy_leafcutter_differentialSplicing:

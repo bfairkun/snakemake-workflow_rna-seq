@@ -131,6 +131,11 @@ else:
     contrasts = []
 # Input functions and other functions for the snakemake
 
+def min_samples_per_group_for_contrast(wildcards):
+    df = contrasts_df[contrasts_df['ContrastName'] == wildcards.contrast]
+    group_counts = df.groupby('Group')['sample'].nunique()
+    return min(group_counts.min(), 2)
+
 def FillGenomeNameInFormattedString(FormattedString):
     def InputFunctionToReturn(wildcards):
         return FormattedString.format(GenomeName = samples[samples['sample']==wildcards.sample]['STARGenomeName'].iloc[0])

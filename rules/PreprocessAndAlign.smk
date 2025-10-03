@@ -88,8 +88,8 @@ rule fastp:
         R1 = "Fastq/{sample}.R1.fastq.gz",
         R2 = "Fastq/{sample}.R2.fastq.gz",
     output:
-        R1 = "FastqFastp/{sample}.R1.fastq.gz",
-        R2 = "FastqFastp/{sample}.R2.fastq.gz",
+        R1 = temp("FastqFastp/{sample}.R1.fastq.gz"),
+        R2 = temp("FastqFastp/{sample}.R2.fastq.gz"),
         html = "FastqFastp/{sample}.fastp.html",
         json = "FastqFastp/{sample}.fastp.json"
     params:
@@ -115,7 +115,7 @@ rule fastp_SE:
     input:
         R1 = "Fastq/{sample}.R1.fastq.gz",
     output:
-        R1 = "FastqFastp/{sample}.R1.fastq.gz",
+        R1 = temp("FastqFastp/{sample}.R1.fastq.gz"),
         html = "FastqFastp/{sample}.fastp.html",
         json = "FastqFastp/{sample}.fastp.json"
     params:

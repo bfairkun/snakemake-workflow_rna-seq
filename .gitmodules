@@ -7,3 +7,6 @@
 [submodule "scripts/leafcutter2_chao"]
 	path = scripts/leafcutter2_chao
 	url = git@github.com:archieboo/leafcutter2.git
+[submodule "scripts/GenometracksByGenotype"]
+	path = scripts/GenometracksByGenotype
+	url = git@github.com:bfairkun/GenometracksByGenotype.git

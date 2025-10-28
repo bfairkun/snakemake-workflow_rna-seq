@@ -1,12 +1,16 @@
 [submodule "scripts/leafcutter"]
 	path = scripts/leafcutter
 	url = git@github.com:davidaknowles/leafcutter.git
+	branch = main
 [submodule "scripts/leafcutter2"]
 	path = scripts/leafcutter2
 	url = git@github.com:bfairkun/leafcutter2_ben.git
+	branch = main
 [submodule "scripts/leafcutter2_chao"]
 	path = scripts/leafcutter2_chao
 	url = git@github.com:archieboo/leafcutter2.git
+	branch = main
 [submodule "scripts/GenometracksByGenotype"]
 	path = scripts/GenometracksByGenotype
 	url = git@github.com:bfairkun/GenometracksByGenotype.git
+	branch = main

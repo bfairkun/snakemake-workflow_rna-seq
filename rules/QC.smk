@@ -1,4 +1,3 @@
-
 rule QualimapRnaseq:
     input:
         gtf = FillGenomeNameInFormattedString(config['GenomesPrefix'] + "{GenomeName}/Reference.gtf"),
@@ -49,12 +48,41 @@ rule CountReadsPerSample:
         "logs/CountReadsPerSample.log"
     shell:
         """
-        # exec > {log} 2>&1
-        # set -x
         for f in {input}
         do
            printf "%s\\t%s\\n" $f $(awk -F'\\t' '$1~"^chr[1-9]" {{sum+=$3}} END {{print sum}}' $f) >> {output}
         done
+        """
+
+rule CountMappedBasesPerSample:
+    input:
+        bam="Alignments/{sample}/Aligned.sortedByCoord.out.bam"
+    output:
+        "QC/MappedBases/{sample}.mappedBases.txt"
+    log:
+        "logs/CountMappedBasesPerSample.{sample}.log"
+    shell:
+        """
+        bedtools bamtobed -split -bed12 -i {input.bam} | awk '{{
+            n_blocks = $10
+            split($11, block_sizes, ",")
+            for (i = 1; i <= n_blocks; i++) {{
+                if (block_sizes[i] != "") sum += block_sizes[i]
+            }}
+        }} END {{print "{wildcards.sample}\\t" sum}}' > {output}
+        """
+
+rule CollectMappedBasesPerSample:
+    input:
+        expand("QC/MappedBases/{sample}.mappedBases.txt", sample=AllSamples)
+    output:
+        "../output/QC/MappedBasesPerSamples.tsv"
+    log:
+        "logs/CollectMappedBasesPerSample.log"
+    localrule: True
+    shell:
+        """
+        cat {input} > {output}
         """
 
 rule CatIdxStats_R:

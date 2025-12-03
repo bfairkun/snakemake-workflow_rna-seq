@@ -42,3 +42,26 @@ rule generate_all_samples_bigwig_table:
         outdir = os.path.dirname(output[0])
         os.makedirs(outdir, exist_ok=True)
         out_df.to_csv(output[0], sep="\t", index=False)
+
+rule summarise_bigwigs_by_contrast:
+    input:
+        bigwigs = lambda wildcards: expand("bigwigs/unstranded/{sample}.bw", sample=[row['sample'] for _, row in contrasts_df[(contrasts_df["ContrastName"] == wildcards.contrast) & (contrasts_df["Group"] == wildcards.group)].iterrows()])
+    output:
+        "Plot_contrasts/contrast_bigwigs/{contrast}/{group}.bw"
+    log:
+        "logs/Plot_contrasts/summarise_bigwigs/{contrast}_{group}.log"
+    conda:
+        "../scripts/GenometracksByGenotype/GenometracksByGenotype.conda_env.yml"
+    resources:
+        mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
+    shell:
+        """
+        python scripts/GenometracksByGenotype/SummariseBigwigs.py -i {input.bigwigs} -o {output} --function mean -vv &> {log}
+        """
+
+rule gather_all_contrast_bigwigs:
+    input:
+        expand("Plot_contrasts/contrast_bigwigs/{contrast}/{group}.bw",
+               zip,
+               group=[row['Group'] for _, row in contrasts_df.iterrows()],
+               contrast=[row['ContrastName'] for _, row in contrasts_df.iterrows()])

@@ -129,6 +129,18 @@ if config["contrast_group_files_prefix"]:
     contrasts_df = contrasts_df.merge(samples[["sample", "STARGenomeName"]], on="sample", how="left")
 else:
     contrasts = []
+
+# Exclude 1vs1 contrasts for differential expression targets
+try:
+    contrasts_de = [
+        c for c in contrasts
+        if contrasts_df[contrasts_df["ContrastName"] == c]
+              .groupby("Group")["sample"].nunique().max() > 1
+    ]
+except NameError:
+    contrasts_de = contrasts
+
+
 # Input functions and other functions for the snakemake
 
 def min_samples_per_group_for_contrast(wildcards):

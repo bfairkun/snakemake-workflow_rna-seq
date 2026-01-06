@@ -20,6 +20,7 @@ include: "rules/QC.smk"
 include: "rules/MakeBigwigs.smk"
 include: "rules/PreparePyGenomeTracksPlots.smk"
 
+
 rule all:
     input:
         "samples.SRA_accession_links_filled.tsv",
@@ -31,7 +32,7 @@ rule all:
         expand("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/{Metric}.sorted.bed.gz", GenomeName = samples['STARGenomeName'].unique(), Metric = ["JuncCounts", "PSI", "PSI_ByMax", "PSIDenom", "PSI_ByMaxDenom"]),
         expand("SplicingAnalysis/ClassifyJuncs/{GenomeName}/Leaf2_junction_classifications.txt", GenomeName = samples['STARGenomeName'].unique()),
         expand("SplicingAnalysis/differential_splicing_tidy/{contrast}/Results.tsv.gz", contrast=contrasts),
-        expand("differential_expression/{contrast}/results.tsv.gz", contrast=contrasts),
+        expand("differential_expression/{contrast}/results.tsv.gz", contrast=contrasts_de),
         "Plot_contrasts/all_contrasts.groups.tsv",
         "Plot_contrasts/all_contrasts_all_samples_bigwig_table.tsv",
         "Multiqc",

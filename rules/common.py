@@ -82,9 +82,11 @@ if 'R1_link' not in samples.columns:
     samples['R1_link'] = pd.NA
 if 'R2_link' not in samples.columns:
     samples['R2_link'] = pd.NA
+if 'SRA_accession' not in samples.columns:
+    samples['SRA_accession'] = pd.NA
 samples[["R1_link", "R2_link"]] = samples.apply(
     lambda row: pd.Series(fetch_ena_links(row["SRA_accession"])) 
-    if pd.isna(row["R1_link"]) or row["R1_link"] == "" 
+    if (pd.isna(row["R1_link"]) or row["R1_link"] == "") and not pd.isna(row["SRA_accession"])
     else pd.Series([row["R1_link"], row["R2_link"]]),
     axis=1
 )

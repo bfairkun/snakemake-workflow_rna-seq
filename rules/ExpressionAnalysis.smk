@@ -82,3 +82,21 @@ rule ExpressionMatrix:
         """
         python scripts/CountsToExpressionMatrix.py -i {input.counts} --log2TPM_Matrix_bed {output.tpm} --log2TMM_Normalized_CPM_Matrix_bed {output.cpm} --log2Filtered_TMM_Normalized_CPM_Matrix_bed {output.filtered_cpm} --sample_rename_regex {params.sample_rename_regex} {params.extra} &> {log}
         """
+
+rule bgzip_ExpressionMatrix_bed:
+    input:
+        bed = "ExpressionMatrices/{GenomeName}/{MatrixType}.bed",
+    output:
+        bed = "ExpressionMatrices/{GenomeName}/{MatrixType}.sorted.bed.gz",
+        index = touch("ExpressionMatrices/{GenomeName}/{MatrixType}.sorted.bed.gz.indexing_done"),
+    log:
+        "logs/bgzip_ExpressionMatrix_bed/{GenomeName}/{MatrixType}.log"
+    resources:
+        mem_mb = GetMemForSuccessiveAttempts(24000, 54000)
+    params:
+        GetIndexingParamsFromGenomeName
+    shell:
+        """
+        (bedtools sort -header -i {input.bed} | bgzip /dev/stdin -c > {output.bed}) &> {log}
+        (tabix {params} -f -p bed {output.bed}) &>> {log} && touch {output.index}
+        """

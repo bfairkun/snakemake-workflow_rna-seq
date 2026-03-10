@@ -131,6 +131,7 @@ if config["contrast_group_files_prefix"]:
     contrasts_df = contrasts_df.merge(samples[["sample", "STARGenomeName"]], on="sample", how="left")
 else:
     contrasts = []
+    contrasts_df = pd.DataFrame(columns=["sample", "Group", "ContrastName", "STARGenomeName"])
 
 # Exclude 1vs1 contrasts for differential expression targets
 try:

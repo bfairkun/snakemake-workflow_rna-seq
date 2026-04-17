@@ -147,7 +147,8 @@ rule leafcutter_to_PSI:
         PSI = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI.bed"),
         PSIByMax = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_ByMax.bed"),
         PSIDenom = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSIDenom.bed"),
-        PSIByMaxDenom = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_ByMaxDenom.bed")
+        PSIByMaxDenom = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_ByMaxDenom.bed"),
+        PSIOverlappingJuncsForN = temp("SplicingAnalysis/leafcutter/{GenomeName}/juncTableBeds/PSI_OverlappingJuncsForN.bed")
     log:
         "logs/leafcutter_to_PSI/{GenomeName}.log"
     resources:
@@ -156,7 +157,7 @@ rule leafcutter_to_PSI:
         "../envs/r_2.yml"
     shell:
         """
-        Rscript scripts/leafcutter_to_PSI.R {input.numers} {output.PSI} {output.PSIByMax} {output.juncs} {output.PSIDenom} {output.PSIByMaxDenom} &> {log}
+        Rscript scripts/leafcutter_to_PSI.R {input.numers} {output.PSI} {output.PSIByMax} {output.juncs} {output.PSIDenom} {output.PSIByMaxDenom} {output.PSIOverlappingJuncsForN} &> {log}
         """
 
 rule bgzip_PSI_bed:

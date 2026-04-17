@@ -2,7 +2,7 @@
 
 if(interactive()){
   args <- scan(text=
-                 "rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/clustering/leafcutter_perind_numers.counts.gz rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSI_ByMax.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSI.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/JuncCounts.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSIDenom.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSIByMaxDenom.bed", what='character')
+                 "rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/clustering/leafcutter_perind_numers.counts.gz rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSI_ByMax.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSI.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/JuncCounts.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSIDenom.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSIByMaxDenom.bed rna-seq/SplicingAnalysis/leafcutter/SalpingoecaRosetta_ensemblv_59/juncTableBeds/PSI_OverlappingJuncsForN.bed", what='character')
 } else{
   args <- commandArgs(trailingOnly=TRUE)
 }
@@ -14,6 +14,7 @@ PSIOutByMax <- args[3]
 JuncOut <- args[4]
 PSIDenomOut <- args[5]
 PSIByMaxDenom <- args[6]
+PSIOverlappingJuncsForNOut <- args[7]
 
 library(tidyverse)
 
@@ -53,6 +54,32 @@ PSIByWithinClusterMax.df <- (Count.Table.mat / as.numeric(ClusterMax.mat) * 100)
   signif() %>%
   as.data.frame()
 
+# PSI with overlapping-junction denominator:
+# For each junction J, n = sum of counts from junctions in the same cluster
+# whose genomic interval overlaps J (start_i < end_J AND end_i > start_J).
+junc_meta <- data.frame(junc = rownames(Count.Table.mat), idx = seq_len(nrow(Count.Table.mat))) %>%
+  separate(junc, into = c("chrom", "start_coord", "end_coord", "cluster_id"),
+           sep = ":", convert = TRUE, remove = FALSE) %>%
+  mutate(cluster = paste(chrom, cluster_id, sep = "_"))
+
+overlap_pairs <- junc_meta %>%
+  select(i = idx, cluster, si = start_coord, ei = end_coord) %>%
+  inner_join(
+    junc_meta %>% select(j = idx, cluster, sj = start_coord, ej = end_coord),
+    by = "cluster"
+  ) %>%
+  filter(sj < ei, ej > si)
+
+S <- Matrix::sparseMatrix(
+  i = overlap_pairs$i, j = overlap_pairs$j, x = 1,
+  dims = c(nrow(Count.Table.mat), nrow(Count.Table.mat))
+)
+OverlapSum.mat <- as.matrix(S %*% Count.Table.mat)
+rownames(OverlapSum.mat) <- rownames(Count.Table.mat)
+
+PSI_OverlappingJuncsForN.df <- (Count.Table.mat / OverlapSum.mat * 100) %>%
+  signif() %>%
+  as.data.frame()
 
 PSI.df %>%
     rownames_to_column("junc") %>%
@@ -101,3 +128,12 @@ ClusterMax.mat %>%
     select(`#Chrom`, start, end, junc, gid, strand, everything(), -cluster) %>%
     arrange(`#Chrom`, start, end) %>%
     write_tsv(PSIByMaxDenom)
+
+PSI_OverlappingJuncsForN.df %>%
+    rownames_to_column("junc") %>%
+    separate(junc, into=c("#Chrom", "start", "end", "cluster"), convert=T, remove=F, sep=":") %>%
+    mutate(gid = paste(`#Chrom`, cluster, sep="_" )) %>%
+    mutate(strand = str_extract(cluster, "[+-]")) %>%
+    select(`#Chrom`, start, end, junc, gid, strand, everything(), -cluster) %>%
+    arrange(`#Chrom`, start, end) %>%
+    write_tsv(PSIOverlappingJuncsForNOut)

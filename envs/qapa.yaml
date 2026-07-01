@@ -1,0 +1,22 @@
+name: qapa
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - salmon
+  - bedtools
+  - pybedtools   # install via conda (prebuilt binary) to avoid pip compile failure
+  - r-base
+  - r-optparse
+  - r-dplyr
+  - r-data.table
+  - r-stringr
+  - ucsc-gtftogenepred
+  # NOTE: mamba env create may silently skip the pip section.
+  # If `qapa` is missing after env creation, run manually:
+  #   conda run -n qapa pip install --no-deps \
+  #     "git+https://github.com/morrislab/qapa@f9f59c75d40339e55559554d8512cb062e813932"
+  - pip:
+    - git+https://github.com/morrislab/qapa@f9f59c75d40339e55559554d8512cb062e813932

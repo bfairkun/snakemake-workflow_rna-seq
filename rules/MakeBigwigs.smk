@@ -22,6 +22,8 @@ rule MakeBigwigs_NormalizedToGenomewideCoverage:
         "logs/MakeBigwigs_unstranded/{sample}.log"
     resources:
         mem_mb = GetMemForSuccessiveAttempts(42000, 52000)
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         ReadCount=$(awk -F'\\t' -v f="idxstats/{wildcards.sample}.idxstats.txt" '$1==f {{print $2}}' {input.NormFactorsFile})

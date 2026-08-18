@@ -95,6 +95,8 @@ rule bgzip_ExpressionMatrix_bed:
         mem_mb = GetMemForSuccessiveAttempts(24000, 54000)
     params:
         GetIndexingParamsFromGenomeName
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         (bedtools sort -header -i {input.bed} | bgzip /dev/stdin -c > {output.bed}) &> {log}

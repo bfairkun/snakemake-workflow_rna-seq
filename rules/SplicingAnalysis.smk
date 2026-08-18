@@ -51,6 +51,8 @@ rule ConcatJuncFilesAndKeepUniq:
         "logs/ConcatJuncFilesAndKeepUniq/{GenomeName}.log"
     resources:
         mem_mb = GetMemForSuccessiveAttempts(24000, 48000)
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         (awk -v OFS='\\t' '{{ split($11, blockSizes, ","); JuncStart=$2+blockSizes[1]; JuncEnd=$3-blockSizes[2]; print $0, JuncStart, JuncEnd }}' {input} | sort -k1,1 -k6,6 -k13,13n -k14,14n | python scripts/AggregateSortedCattedJuncBeds.py | bedtools sort -i - | bgzip -c /dev/stdin  > {output}) &> {log}
@@ -134,6 +136,8 @@ rule leafcutter_cluster:
         "logs/leafcutter_cluster/{GenomeName}.log"
     params:
         "-p 0.0001"
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         python scripts/leafcutter/clustering/leafcutter_cluster_regtools.py -j {input.juncfile_list} {params} -r {output.outdir} -k True &> {log}
@@ -172,6 +176,8 @@ rule bgzip_PSI_bed:
         mem_mb = GetMemForSuccessiveAttempts(24000, 54000)
     params:
         GetIndexingParamsFromGenomeName
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         (bedtools sort -header -i {input.bed} | bgzip /dev/stdin -c > {output.bed}) &> {log}
@@ -187,6 +193,8 @@ rule Get5ssSeqs:
         fa = config['GenomesPrefix'] + "{GenomeName}/Reference.fa",
     output:
         "SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.DonorSeq.tsv"
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         zcat {input.basic} | awk -v OFS='\\t' -F'\\t' 'NR>1 {{print $1, $2, $3, $1"_"$2"_"$3"_"$6, ".", $6}}' | sort -u | awk -v OFS='\\t' -F'\\t'  '$6=="+" {{$2=$2-4; $3=$2+11; print $0}} $6=="-" {{$3=$3+3; $2=$3-11; print $0}}' | bedtools getfasta -tab -bed - -s -name -fi {input.fa} | grep -v 'N' > {output}
@@ -307,6 +315,8 @@ rule SpliSER_index_SpliceSites:
         "logs/index_SpliceSites/{GenomeName}.{DonorsOrAcceptors}.log"
     params:
         GetIndexingParamsFromGenomeName
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         (bgzip {input.bed} -c > {output.bed}) &> {log}
@@ -343,6 +353,8 @@ rule SpliSER_Making_Beta1_SAF:
         fai = config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai",
     output:
         SAF = "SplicingAnalysis/SplisER_Quantifications/{GenomeName}/{DonorsOrAcceptors}.saf",
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         zcat {input.SpliceSite} | awk -v OFS='\\t' -F'\\t' 'NR>1 {{print $1, $2-1, $2, $4, $5, $6}}' | bedtools sort -i - | bedtools slop -s -l 3 -r 2 -i - -g {input.fai} | awk -v OFS='\\t' -F'\\t' '{{print $4, $1, $2+1, $3, $6, $5}}' > {output.SAF}

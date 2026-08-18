@@ -32,6 +32,8 @@ rule MultiQC:
     output:
         directory("Multiqc")
     localrule: True
+    conda:
+        "../envs/multiqc.yml"
     shell:
         """
         multiqc -f -o {output}/ {input} &> {log}
@@ -69,6 +71,8 @@ rule CountMappedBasesPerSample:
         "QC/MappedBases/{sample}.mappedBases.txt"
     log:
         "logs/CountMappedBasesPerSample.{sample}.log"
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         bedtools bamtobed -split -bed12 -i {input.bam} | awk '{{

@@ -38,6 +38,8 @@ rule faidxGenome:
         fa = config['GenomesPrefix'] + "{GenomeName}/Reference.fa",
     output:
         fai = config['GenomesPrefix'] + "{GenomeName}/Reference.fa.fai",
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         samtools faidx {input.fa}
@@ -51,6 +53,8 @@ rule SortIndexGtf:
         index  = touch(config['GenomesPrefix'] + "{GenomeName}/Reference.gtf.gz.indexing_done"),
     params:
         GetIndexingParamsFromGenomeName
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         (grep '^#' {input.gtf} ; grep -v '^#' {input.gtf} | sort -k1,1 -k4,4n) | bgzip -c > {output.gtf} && tabix -f {params} -p gff {output.gtf} && touch {output.index}
@@ -166,6 +170,8 @@ rule STAR_make_index:
         mem = "52000",
         slurm_partition = "bigmem2",
         ntasks = 5
+    conda:
+        "../envs/STAR.yml"
     shell:
         """
         mkdir -p {output.index}

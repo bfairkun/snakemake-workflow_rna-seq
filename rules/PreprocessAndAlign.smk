@@ -27,6 +27,8 @@ rule StageProvidedBam:
         "logs/StageProvidedBam/{sample}.log"
     wildcard_constraints:
         sample = wildcard_constraints_from_list(samples_from_bam)
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         for bam in {input.bams}
@@ -206,6 +208,8 @@ rule STAR_Align:
         # N = 1
     wildcard_constraints:
         sample = wildcard_constraints_from_list(samples_STAR_aligned_here)
+    conda:
+        "../envs/STAR.yml"
     shell:
         """
         STAR --readMapNumber {params.readMapNumber} --outFileNamePrefix {output.outdir}/ --genomeDir {input.index}/ --readFilesIn {input.R1} {input.R2}  --outSAMtype BAM Unsorted --readFilesCommand zcat --runThreadN {threads} --outSAMmultNmax 1 {params.ENCODE_params} --outSAMstrandField intronMotif {params.extra} &> {log}
@@ -223,6 +227,8 @@ rule sort_bam:
         sample = wildcard_constraints_from_list(samples_needing_alignment)
     log:
         "logs/sort_bam/{sample}.log"
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         samtools sort -@ {threads} -m 4000M -o {output.sorted_bam} {input.bam} &> {log}
@@ -259,6 +265,8 @@ rule indexBam:
         GetIndexingParamsFromSampleName
     output:
         index = touch("Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done"),
+    conda:
+        "../envs/pybedtools.yml"
     shell: "samtools index {params} {input} &> {log} && touch {output.index}"
 
 
@@ -268,6 +276,8 @@ rule idxstats:
         index = "Alignments/{sample}/Aligned.sortedByCoord.out.bam.indexing_done",
     output:
         "idxstats/{sample}.idxstats.txt"
+    conda:
+        "../envs/pybedtools.yml"
     shell:
         """
         samtools idxstats {input.bam} > {output}

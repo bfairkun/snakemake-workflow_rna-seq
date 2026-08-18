@@ -32,3 +32,7 @@ Rows sharing a `sample` value are combined (fastq concatenated, bams merged). En
     snakemake -n --configfile .test/config.yaml
 
 Covers all three entry points. A change touching entry-point resolution should also be checked against the failure paths: unusable bam with and without a fastq fallback, and a bam-entry row missing `Library_Layout`.
+
+## Known issues
+
+* `rule DownloadFromAccession` is wrong for a sample whose reads are spread over several runs *when downloading via aspera*. The shell loops `for link in {params.link}` but then passes `{params.aspera_link}` — the whole list — to a single `ascp` call, so every iteration re-fetches all links into the same temp file. The wget branch below it handles the same case correctly, one link per iteration. The fix is to transform the loop variable in bash (`${link/ftp:\/\/ftp.sra.ebi.ac.uk\//era-fasp@fasp.sra.ebi.ac.uk:}`) and drop the now-unused `aspera_link` param; it needs an aspera key plus a multi-run accession to test against.

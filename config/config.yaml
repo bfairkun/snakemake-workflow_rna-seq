@@ -18,11 +18,6 @@ contrast_group_files_prefix:
 #Scratch dir for large temporary files
 scratch: "/scratch/midway2/bjf79/"
 
-# key for faster downloading of public fastq samples with aspera instead of
-# ftp. Leave blank (or point at a file that does not exist) to download with wget over the
-# ftp/http links instead, though aspera tends to just work better/faster
-aspera_key: "/home/bjf79/.aspera/connect/etc/asperaweb_id_dsa.openssh"
-
 # Provided bams (bam column in the samples file) are checked before the DAG is built: they must
 # exist, be coordinate-sorted, and have chromosome names/lengths agreeing with their reference. A
 # bam failing these checks falls back to the fastq/SRA source in the same row if there is one, and

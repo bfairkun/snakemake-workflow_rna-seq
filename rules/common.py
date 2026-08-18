@@ -269,6 +269,14 @@ def UsePairedEndFeatureCountsIfMixingSingleAndPairedReads(wildcards):
 def GetProvidedBams(wildcards):
     return samples.loc[(samples['sample']==wildcards.sample) & samples['bam'].notna()]['bam'].tolist()
 
+def GetDownloadLinks(wildcards):
+    """
+    ENA serves the same host and path over https as over ftp, and compute nodes can reach 443 but
+    not 21, so rewriting the scheme is what lets rule DownloadFromAccession run off the login node
+    """
+    links = samples.loc[samples['sample']==wildcards.sample][wildcards.Read + '_link'].tolist()
+    return [link.replace("ftp://", "https://", 1) if link.startswith("ftp://") else link for link in links]
+
 def ExpandAllSamplesInFormatStringFromGenomeNameWildcard(FormattedString):
     def InputFunctionToReturn(wildcards):
         return expand(FormattedString, sample=samples.loc[samples['STARGenomeName']==wildcards.GenomeName]['sample'].unique())

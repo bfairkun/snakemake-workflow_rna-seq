@@ -105,43 +105,31 @@ rule CopyFastq_SE:
 
 rule DownloadFromAccession:
     """
-    aspera_key is a param rather than an input so that it can be left blank in the config, in which
-    case (or if the key file is missing) the fastq is fetched over ftp with wget instead
+    Runs on the cluster rather than the login node, which is what makes downloads parallel. A
+    single connection to ENA gets ~1.2 MiB/s whatever the protocol or node, so throughput comes
+    entirely from running many of these at once; see AGENTS.md for the measurements.
     """
     output:
         fastq = temp("Fastq/{sample}.{Read}.fastq.gz"),
     log:
-        "logs/DownloadFastqFromAsperaLink/{sample}.{Read}.log"
+        "logs/DownloadFromAccession/{sample}.{Read}.log"
     wildcard_constraints:
         Read = "R1|R2",
         sample = wildcard_constraints_from_list(samples_from_links)
     shadow: "shallow"
-    conda:
-        "../envs/ascp.yml"
-    localrule: True
+    resources:
+        mem_mb = 2000
     params:
-        aspera_key = config['aspera_key'],
-        link = lambda wildcards: samples.loc[samples['sample']==wildcards.sample][wildcards.Read + '_link'].tolist(),
-        aspera_link = lambda wildcards: [link.replace("ftp://ftp.sra.ebi.ac.uk/", "era-fasp@fasp.sra.ebi.ac.uk:") for link in samples.loc[samples['sample']==wildcards.sample][wildcards.Read + '_link'].tolist()]
+        links = GetDownloadLinks
     shell:
         """
-        if [[ -e "{params.aspera_key}" && ! -z "{params.link}" ]]; then
-            for link in {params.link}
-            do
-                tmpfile=$(mktemp -p . tmp.download.XXXXXXXX.fastq.gz)
-                ascp -v -QT -l 300m -P33001 -i {params.aspera_key} {params.aspera_link} $tmpfile &>> {log}
-                cat $tmpfile >> {output.fastq}
-                rm $tmpfile
-            done
-        else
-            for link in {params.link}
-            do
-                tmpfile=$(mktemp -p . tmp.download.XXXXXXXX.fastq.gz)
-                wget -O $tmpfile ${{link}} &>> {log}
-                cat $tmpfile >> {output.fastq}
-                rm $tmpfile
-            done
-        fi
+        for link in {params.links}
+        do
+            tmpfile=$(mktemp -p . tmp.download.XXXXXXXX.fastq.gz)
+            wget -O $tmpfile ${{link}} &>> {log}
+            cat $tmpfile >> {output.fastq}
+            rm $tmpfile
+        done
         """
 
 rule fastp:

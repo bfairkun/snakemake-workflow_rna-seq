@@ -7,8 +7,7 @@
 # Swap the R1_link/R2_link of the FromLink sample for an SRA_accession to also exercise the ENA
 # link lookup, which requires network access at DAG build time.
 #
-# Only the keys below are overridden; the rest are inherited from config/config.yaml, including
-# aspera_key, which rule DownloadFromAccession takes as an input file and so cannot be blank.
+# Only the keys below are overridden; the rest are inherited from config/config.yaml.
 
 samples: .test/samples.tsv
 
@@ -21,6 +20,3 @@ contrast_group_files_prefix:
 scratch: ".test/scratch/"
 
 bam_precheck: True
-
-# blank on purpose: exercises the wget fallback in rule DownloadFromAccession
-aspera_key: ""

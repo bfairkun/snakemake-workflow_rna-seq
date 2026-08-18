@@ -33,6 +33,12 @@ Rows sharing a `sample` value are combined (fastq concatenated, bams merged). En
 
 Covers all three entry points. A change touching entry-point resolution should also be checked against the failure paths: unusable bam with and without a fastq fallback, and a bam-entry row missing `Library_Layout`.
 
-## Known issues
+## Cluster constraints (RCC Midway3)
 
-* `rule DownloadFromAccession` is wrong for a sample whose reads are spread over several runs *when downloading via aspera*. The shell loops `for link in {params.link}` but then passes `{params.aspera_link}` — the whole list — to a single `ascp` call, so every iteration re-fetches all links into the same temp file. The wget branch below it handles the same case correctly, one link per iteration. The fix is to transform the loop variable in bash (`${link/ftp:\/\/ftp.sra.ebi.ac.uk\//era-fasp@fasp.sra.ebi.ac.uk:}`) and drop the now-unused `aspera_link` param; it needs an aspera key plus a multi-run accession to test against.
+Measured, not assumed — these are why some rules are pinned and others are not:
+
+* Compute nodes reach **port 443 but not port 21**. ENA reports `ftp://` links, so `GetDownloadLinks` rewrites them to `https://` (same host and path) and `DownloadFromAccession` runs on the cluster. Leaving them as ftp makes the job hang until it times out.
+* **`/cds` is not mounted on compute nodes.** `CopyFastq` and `CopyFastq_SE` read from there, so they must stay `localrule: True`.
+* A single connection to EBI sustains **~1.2 MiB/s** regardless of protocol (https 1.19, ftp 1.20) or node type. Aggregate scales linearly with concurrency and had not saturated at 24 streams (33.7 MiB/s). Downloads are therefore parallelism-bound, not bandwidth-bound.
+* `DownloadFastaAndGtf` is left `localrule: True` deliberately: it is a handful of jobs per genome, and one link in `STAR_Genome_List.tsv` is plain `http://`, whose port has not been checked from a compute node.
+* Aspera is not used; `era-fasp@fasp.sra.ebi.ac.uk` fails to authenticate with the standard public key (ascp 3.9.1), and parallel https beats it anyway.

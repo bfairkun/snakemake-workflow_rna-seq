@@ -44,7 +44,7 @@ A sample can enter the workflow three ways. Whichever is highest in this list wi
 |---|---|---|
 | 1 | `bam` | Already-aligned bam is checked and symlinked into `Alignments/{sample}/` (`rule StageProvidedBam`). No trimming or alignment. |
 | 2 | `R1`, `R2` | Local fastq is concatenated, trimmed with fastp, and aligned. |
-| 3 | `SRA_accession` | ENA ftp links are looked up at DAG build time, downloaded (aspera if `aspera_key` is set, otherwise wget), then trimmed and aligned. `R1_link`/`R2_link` can be given directly to skip the lookup. |
+| 3 | `SRA_accession` | ENA links are looked up at DAG build time, downloaded with wget over https, then trimmed and aligned. `R1_link`/`R2_link` can be given directly to skip the lookup. |
 
 Rows sharing a `sample` value are combined: multiple fastq rows are concatenated, multiple bam rows are merged. A sample must use one entry point for all of its rows — a bam row and a fastq row for the same sample is an error.
 
@@ -73,10 +73,20 @@ If the samples file contains many `SRA_accession`s, the ENA lookup runs on every
 | `GenomesPrefix` | Where references and indexes are built: `{GenomesPrefix}{GenomeName}/`. Shared across projects, so an already-built genome is reused. |
 | `contrast_group_files_prefix` | Directory of `{ContrastName}.txt` group files (two columns: sample, group) driving differential expression and splicing. Leave blank for none. |
 | `scratch` | Directory for large temporary files (bigwig sorting). |
-| `aspera_key` | Path to the aspera openssh key. Consumed as an input file by `rule DownloadFromAccession`, so it must point at a file that exists even when downloading over ftp instead. |
 | `bam_precheck` | Whether to check provided bams before building the DAG (see below). Default `True`. |
 
 Note that `rule all` writes some QC summaries to `../output/`, i.e. a sibling of the working directory. Running from a `code/` subdirectory of a project, with `output/` alongside it, is the layout this assumes.
+
+### Downloading public data
+
+`rule DownloadFromAccession` runs on the cluster, not the login node. This matters more than it looks: a single connection to ENA sustains only ~1.2 MiB/s regardless of protocol or machine, so a 2 GB fastq takes ~25-30 minutes no matter what, and the only way to go faster is to run many downloads at once. Measured on Midway3: 1 stream 1.2 MiB/s, 4 streams 7.9 MiB/s, 24 streams 33.7 MiB/s aggregate, with no per-stream loss. For 24 files of 2 GB that is ~11 hours serialized versus ~25 minutes in parallel.
+
+Two consequences worth knowing:
+
+* ENA links are rewritten from `ftp://` to `https://` before download (`GetDownloadLinks` in `rules/common.py`). Midway3 compute nodes can reach port 443 but **not** port 21, so the ftp links ENA reports would hang there. ENA serves the identical host and path over both.
+* Keep concurrency moderate — roughly 20-30 simultaneous downloads already saturates the useful range, and pointing all of `jobs: 150` at a public archive is impolite.
+
+Aspera is not used. The `era-fasp@fasp.sra.ebi.ac.uk` endpoint fails to authenticate with the standard public key, and even working it would not beat parallel https.
 
 ### Step 3: Run
 

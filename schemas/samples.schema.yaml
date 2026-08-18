@@ -4,19 +4,22 @@ properties:
     sample:
         type: string
         pattern: "^[A-Za-z_][A-Za-z0-9_.]*$"
-        description: sample name/identifier. Duplicate over multiple rows for multiple fastq runs. sample name must start with a letter or underscore, and can only contain letters, numbers, underscores, and periods
+        description: sample name/identifier. Duplicate over multiple rows to combine multiple fastq runs, or multiple bams, into one sample. sample name must start with a letter or underscore, and can only contain letters, numbers, underscores, and periods. Hyphens are deliberately excluded because sample names become column names in count tables read by R, which mangles them
     STARGenomeName:
         type: string
         description: Name of fasta/gtf pair used to align, as uniquely defined in STAR_Genome_List
+    bam:
+        type: string
+        description: Path to a local coordinate-sorted bam already aligned to the STARGenomeName reference. Takes precedence over R1/R2 and SRA_accession, which are used as a fallback if the bam is unusable (missing, not coordinate-sorted, or chromosome names/lengths disagreeing with the reference). Library_Layout is required alongside a bam. Duplicate the sample name over multiple rows to merge multiple bams
     R1:
         type: string
-        description: Path to local R1 fastq gz file
+        description: Path to local R1 fastq gz file. Ignored if a usable bam is given in the same row
     R2:
         type: string
         description: Path to local R2 fastq gz file
     SRA_accession:
         type: string
-        description: SRA run accession for downloading. Local files take precedence if also provided in same row. To combine a local file and SRA file within pipeline, need another row with same sample value
+        description: SRA run accession for downloading. Local files take precedence if also provided in same row, and a usable bam takes precedence over both. To combine a local file and SRA file within pipeline, need another row with same sample value
     Strandedness:
         type: string
         description: Strandedness of library
@@ -24,7 +27,7 @@ properties:
         enum: ["U", "FR", "RF"]
     Library_Layout:
         type: string
-        description: PAIRED or SINGLE. If not given, will be auto-inferred based on whether R2 was provided along with an R1, or based on SRA accession
+        description: PAIRED or SINGLE. If not given, will be auto-inferred based on whether R2 was provided along with an R1, or based on SRA accession. Must be given explicitly for samples entering as a bam, where there is no R2 to infer it from
         enum: ["PAIRED", "SINGLE"]
     R1_link:
         type: string
@@ -34,7 +37,7 @@ properties:
         description: ftp download link for R2. Will be auto-inferred from SRA accession if provided
     Aligner:
         type: string
-        description: STAR (preferred for short Illumina reads) or minimap2 (preferred for long reads)
+        description: STAR (preferred for short Illumina reads) or minimap2 (preferred for long reads). For a sample entering as a bam this describes what kind of reads the bam contains, since it also gates the short-read-only quantification rules; no alignment is performed
         default: STAR
         enum: ["STAR", "minimap2"]
 required:

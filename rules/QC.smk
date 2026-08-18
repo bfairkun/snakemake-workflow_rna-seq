@@ -23,9 +23,9 @@ rule QualimapRnaseq:
 
 rule MultiQC:
     input:
-        expand("Alignments/{sample}/Log.final.out", sample= samples_ForSTAR),
+        expand("Alignments/{sample}/Log.final.out", sample= samples_STAR_aligned_here),
         expand("QC/QualimapRnaseq/{sample}/rnaseq_qc_results.txt", sample=AllSamples),
-        expand("FastqFastp/{sample}.fastp.json", sample=AllSamples),
+        expand("FastqFastp/{sample}.fastp.json", sample=samples_needing_alignment),
         expand("featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt.summary", GenomeName=samples['STARGenomeName'].unique(), Strandedness=samples['Strandedness'].unique()),
         expand("idxstats/{sample}.idxstats.txt", sample=AllSamples)
     log: "logs/Multiqc.log"
@@ -48,10 +48,18 @@ rule CountReadsPerSample:
         "logs/CountReadsPerSample.log"
     shell:
         """
+        rm -f {output}.tmp
         for f in {input}
         do
-           printf "%s\\t%s\\n" $f $(awk -F'\\t' '$1~"^chr[1-9]" {{sum+=$3}} END {{print sum}}' $f) >> {output}
+           ReadCount=$(awk -F'\\t' '$1~"^chr[1-9]" {{sum+=$3}} END {{print sum+0}}' $f)
+           if [ "$ReadCount" -eq 0 ]
+           then
+               echo "ERROR: $f has no reads on chromosomes matching ^chr[1-9], so bigwig normalization would be undefined. Check that this genome uses UCSC-style chromosome names." >&2
+               exit 1
+           fi
+           printf "%s\\t%s\\n" $f $ReadCount >> {output}.tmp
         done
+        mv {output}.tmp {output}
         """
 
 rule CountMappedBasesPerSample:
@@ -89,7 +97,7 @@ rule CatIdxStats_R:
     input:
         expand("idxstats/{sample}.idxstats.txt", sample=AllSamples)
     output:
-        "test_script.tsv"
+        "QC/idxstats_combined.tsv"
     log:
         "logs/CatIdxStats_R.log"
     conda:

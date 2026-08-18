@@ -1,5 +1,26 @@
-# This file should contain everything to configure the workflow on a global scale.
-# In case of sample based data, it should be complemented by a samples.tsv file that contains
-# one row per sample. It can be parsed easily via pandas.
+# Config for a dry run exercising all three entry points (local fastq, download link, provided
+# bam). Run from the repository root:
+#
+#   snakemake -n --configfile .test/config.yaml
+#
+# .test/make_test_data.sh first creates the small input files that .test/samples.tsv points at.
+# Swap the R1_link/R2_link of the FromLink sample for an SRA_accession to also exercise the ENA
+# link lookup, which requires network access at DAG build time.
+#
+# Only the keys below are overridden; the rest are inherited from config/config.yaml, including
+# aspera_key, which rule DownloadFromAccession takes as an input file and so cannot be blank.
 
-samples: samples.tsv
+samples: .test/samples.tsv
+
+STAR_genomes: config/STAR_Genome_List.tsv
+
+GenomesPrefix: ".test/ReferenceGenomes/"
+
+contrast_group_files_prefix:
+
+scratch: ".test/scratch/"
+
+bam_precheck: True
+
+# blank on purpose: exercises the wget fallback in rule DownloadFromAccession
+aspera_key: ""

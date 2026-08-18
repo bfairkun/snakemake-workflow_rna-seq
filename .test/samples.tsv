@@ -1,0 +1,4 @@
+sample	STARGenomeName	bam	R1	R2	SRA_accession	R1_link	R2_link	Strandedness	Library_Layout
+FromFastq	GRCh38_GencodeRelease44Comprehensive		.test/data/FromFastq.R1.fastq.gz	.test/data/FromFastq.R2.fastq.gz				U	
+FromLink	GRCh38_GencodeRelease44Comprehensive					ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR262/031/SRR26282931/SRR26282931_1.fastq.gz	ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR262/031/SRR26282931/SRR26282931_2.fastq.gz		
+FromBam	GRCh38_GencodeRelease44Comprehensive	.test/data/FromBam.sorted.bam						U	PAIRED

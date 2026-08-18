@@ -22,6 +22,7 @@ scripts/.snakemake*
 !environment.yaml
 !LICENSE
 !README.md
+!AGENTS.md
 !rules
 !rules/*
 !.gitignore
@@ -29,6 +30,10 @@ scripts/.snakemake*
 !.editorconfig
 !.travis.yml
 !.test
+!.test/*
+.test/data
+.test/scratch
+.test/ReferenceGenomes
 !snakemake.sbatch
 !cluster-config.json
 *.swp

@@ -47,5 +47,5 @@ rule all:
 
 rule Gather_Fastp_Fastqs:
     input:
-        expand("FastqFastp/{sample}.fastp.html", sample=AllSamples),
+        expand("FastqFastp/{sample}.fastp.html", sample=samples_needing_alignment),
 

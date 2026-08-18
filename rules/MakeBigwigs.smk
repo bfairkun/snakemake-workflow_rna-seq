@@ -24,7 +24,13 @@ rule MakeBigwigs_NormalizedToGenomewideCoverage:
         mem_mb = GetMemForSuccessiveAttempts(42000, 52000)
     shell:
         """
-        ScaleFactor=$(bc <<< "scale=3;1000000000/$(grep '{wildcards.sample}' {input.NormFactorsFile} | awk 'NR==1 {{print $2}}')")
+        ReadCount=$(awk -F'\\t' -v f="idxstats/{wildcards.sample}.idxstats.txt" '$1==f {{print $2}}' {input.NormFactorsFile})
+        if [ -z "$ReadCount" ]
+        then
+            echo "ERROR: no row for idxstats/{wildcards.sample}.idxstats.txt in {input.NormFactorsFile}" >&2
+            exit 1
+        fi
+        ScaleFactor=$(bc <<< "scale=3;1000000000/$ReadCount")
         scripts/BamToBigwig.sh {input.fai} {input.bam} {output.bw}  GENOMECOV_ARGS="{params.GenomeCovArgs} -scale ${{ScaleFactor}}" REGION='{params.Region}' MKTEMP_ARGS="{params.MKTEMP_ARGS}" SORT_ARGS="{params.SORT_ARGS}" {params.bw_minus}"{output.bw_minus}" &> {log}
         """
 

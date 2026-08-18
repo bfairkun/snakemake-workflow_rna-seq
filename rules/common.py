@@ -186,7 +186,7 @@ if len(samples_missing_layout) > 0:
 
 # validate() only inserts a schema default for a column that is absent altogether, so blank cells
 # in a column that does exist keep their NaN and end up in filenames as "nan". Fill them first.
-for column, spec in read_config_file(os.path.join(workflow.basedir, "schemas/samples.schema.yaml"))['properties'].items():
+for column, spec in read_config_file(os.path.join(workflow.current_basedir, "../schemas/samples.schema.yaml"))['properties'].items():
     if 'default' in spec and column in samples.columns:
         samples[column] = samples[column].where(samples[column].apply(is_given), spec['default'])
 

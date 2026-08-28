@@ -9,6 +9,9 @@ samples: config/samples.tsv
 
 STAR_genomes: config/STAR_Genome_List.tsv
 
+# Named matrix flavors for rule JUI_MergeMatrix (rules/JUI.smk) -- see that file for format.
+jui_metrics: config/jui_metrics.yaml
+
 #Prefix for all ReferenceGenomes files... STAR index will be made at {GenomesPrefix}{GenomeName}/
 GenomesPrefix: "/project2/yangili1/bjf79/ReferenceGenomes/"
 

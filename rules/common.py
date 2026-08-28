@@ -20,7 +20,8 @@ if 'config' not in globals():
     config = {
         "samples": "config/samples.tsv",
         "STAR_genomes": "module_workflows/rna_seq/config/STAR_Genome_List.tsv",
-        "contrast_group_files_prefix": "config/contrast_group_files/"
+        "contrast_group_files_prefix": "config/contrast_group_files/",
+        "jui_metrics": "config/jui_metrics.yaml",
     }
 
 # general functions
@@ -135,6 +136,10 @@ samples = pd.read_csv(config["samples"],sep='\t')
 STAR_genomes = pd.read_csv(config["STAR_genomes"],sep='\t', index_col=0, converters={"ChromLargerThan512Mbp": lambda x: x.lower() in ["yes", "true", "y", "True", "T"]})
 
 STAR_genomes['GenomeName'] = STAR_genomes.index
+
+# Named matrix flavors for rule JUI_MergeMatrix (rules/JUI.smk); each key is a valid {metric}
+# wildcard value. See config/jui_metrics.yaml for the expr/fill format.
+JUI_METRICS = read_config_file(config['jui_metrics'])
 
 # Add optional columns if not existing
 for optional_column in ['bam', 'R1', 'R2', 'R1_link', 'R2_link', 'SRA_accession', 'Library_Layout']:

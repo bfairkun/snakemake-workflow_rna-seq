@@ -1,0 +1,40 @@
+# Named matrix flavors for rule JUI_MergeMatrix (rules/JUI.smk). Each key becomes a valid
+# {metric} wildcard value, producing SplicingAnalysis/JUI/{GenomeName}/matrix.{metric}.tsv.gz.
+#
+# `expr` is an arithmetic expression over compute-jui's per-junction TSV columns (see
+# TSV_COLUMNS / DECOMPOSE_COLUMNS in my_utils/src/my_utils/jui_utils.py) — a single column name,
+# or a sum/combination of several. `fill` says what a junction not observed in a given sample
+# should read as in that sample's cell: 0 for count-like expressions (absence = zero reads), or
+# null for ratio-like expressions (absence = undefined, not zero).
+#
+# Add a new matrix flavor by adding an entry here — no code change needed.
+
+k:
+  expr: "k"
+  fill: 0
+
+JUI:
+  expr: "JUI"
+  fill: null
+
+JUI_shrunk:
+  expr: "JUI_shrunk"
+  fill: null
+
+RetentionIndex:
+  expr: "RetentionIndex"
+  fill: null
+
+CompetitionIndex:
+  expr: "CompetitionIndex"
+  fill: null
+
+# Example combined metric: total reads observed at either splice site of the junction.
+usage_total:
+  expr: "k + C_D + C_A"
+  fill: 0
+
+# Example combined metric: total intron-retention reads at either splice site.
+IR_reads:
+  expr: "R_D + R_A"
+  fill: 0

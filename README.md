@@ -107,7 +107,7 @@ The fallback decision has to be made before the DAG is built, because Snakemake 
 
 * **Junction strand.** `rule ExtractJuncs` runs `regtools junctions extract -s 0`, which reads the `XS` tag to assign strand. Bams aligned without `--outSAMstrandField intronMotif` (STAR) or without minimap2's `ts` tag will lose junction strand information. This workflow's own STAR and minimap2 rules set these.
 * **Duplicates and multimappers.** featureCounts is run with `--ignoreDup --primary`, so duplicate-marked and secondary alignments are dropped. A bam that was already deduplicated, or one where nothing is flagged, is counted differently from one produced by this workflow.
-* **Chromosome naming.** Normalization in `rule CountReadsPerSample` sums reads on chromosomes matching `^chr[1-9]`, i.e. UCSC-style names. A reference using Ensembl-style names (`1`, `2`, ...) will stop with an error rather than silently produce an undefined bigwig scale factor.
+* **Chromosome naming.** Bigwig normalization (`scripts/NormalizeBigwig.py`, called from `rule MakeBigwigs_NormalizedToGenomewideCoverage`) sums covered bases on chromosomes matching `--chrom-filter` (default `^chr[0-9]+$`, i.e. UCSC-style numbered chromosomes). A reference using Ensembl-style names (`1`, `2`, ...) will stop with an error rather than silently produce an undefined bigwig scale factor.
 
 ## Testing
 

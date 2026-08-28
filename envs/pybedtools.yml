@@ -3,6 +3,8 @@ name: pybedtools
 # ucsc-bedgraphtobigwig pulled mysql-connector-c and conflicted with the pinned openssl/libstdcxx.
 # Kept as a minimal spec at the same versions instead. Backs the rules needing bedtools, samtools,
 # bgzip/tabix, or bedGraphToBigWig (scripts/BamToBigwig.sh needs the last three together).
+# pybigwig backs MakeBigwigs_NormalizedToGenomewideCoverage (scripts/NormalizeBigwig.py), which
+# reads/writes bigwigs directly instead of the bigWigToBedGraph/bedGraphToBigWig round trip.
 channels:
   - conda-forge
   - bioconda
@@ -17,3 +19,4 @@ dependencies:
   - samtools=1.21
   - htslib=1.21
   - ucsc-bedgraphtobigwig
+  - pybigwig

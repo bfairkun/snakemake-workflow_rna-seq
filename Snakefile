@@ -16,6 +16,7 @@ include: "rules/PreprocessAndAlign.smk"
 include: "rules/IndexGenome.smk"
 include: "rules/ExpressionAnalysis.smk"
 include: "rules/SplicingAnalysis.smk" #Contains rules inherited from ExpressionAnalysis.smk
+include: "rules/JUI.smk"
 include: "rules/QC.smk"
 include: "rules/MakeBigwigs.smk"
 include: "rules/PreparePyGenomeTracksPlots.smk"
@@ -25,7 +26,6 @@ rule all:
     input:
         "samples.SRA_accession_links_filled.tsv",
         expand("Alignments/{sample}/Aligned.sortedByCoord.out.bam",sample=AllSamples),
-        "../output/QC/ReadCountsPerSamples.tsv",
         expand("bigwigs/unstranded/{sample}.bw", sample=AllSamples),
         expand("featureCounts/{GenomeName}/AllSamplesUnstrandedCounting.Counts.txt", GenomeName = samples['STARGenomeName'].unique()),
         expand("SplicingAnalysis/ObservedJuncsAnnotations/{GenomeName}.uniq.annotated.with_ss_scores.tsv.gz", GenomeName = samples['STARGenomeName'].unique()),
@@ -43,6 +43,7 @@ rule all:
             GenomeName = samples['STARGenomeName'].unique()
         ),
         expand("ExpressionMatrices/{GenomeName}/{MatrixType}.sorted.bed.gz", GenomeName = samples['STARGenomeName'].unique(), MatrixType = ["log2TPM", "log2TMM_CPM", "log2Filtered_TMM_CPM"]),
+        expand("SplicingAnalysis/JUI/{GenomeName}/matrix.{metric}.tsv.gz", GenomeName = samples['STARGenomeName'].unique(), metric = list(JUI_METRICS.keys())),
         expand(config['GenomesPrefix'] + "{GenomeName}/Reference.igv.genome.json", GenomeName = samples['STARGenomeName'].unique()),
 
 rule Gather_Fastp_Fastqs:

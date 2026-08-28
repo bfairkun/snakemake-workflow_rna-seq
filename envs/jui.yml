@@ -1,0 +1,27 @@
+name: jui
+# Backs rules/JUI.smk: ComputeJUI (my_utils' `compute-jui` CLI, consuming a regtools .junc file
+# + bigwig) and JUI_MergeMatrix (scripts/MergeJUIMatrix.py, stdlib-only but shares this env for
+# simplicity). my_utils isn't on PyPI/conda (github.com/bfairkun/my_utils only) so it's installed
+# via pip git+https. Its pyproject.toml deps (numpy/pandas/matplotlib/pysam/biopython) are
+# unpinned, and all conda-installed here already, so pip is expected to see them as satisfied
+# and skip reinstalling -- if a future my_utils release pins versions that conflict with these,
+# revisit. (A `--no-deps` line in the pip: list was tried first to make this explicit, but this
+# mamba/conda version passes each pip: entry to pip individually rather than via a shared
+# requirements.txt, so a bare flag with no following package errors out; dropped.)
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.12
+  - pysam=0.23.0
+  - pandas=2.2.3
+  - numpy=2.2
+  - matplotlib
+  - biopython
+  - pybigwig
+  - samtools=1.21
+  - htslib=1.21
+  - pip
+  - pip:
+      - git+https://github.com/bfairkun/my_utils.git

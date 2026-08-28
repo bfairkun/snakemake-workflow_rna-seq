@@ -41,29 +41,6 @@ rule MultiQC:
 
 
 
-rule CountReadsPerSample:
-    input:
-        expand("idxstats/{sample}.idxstats.txt", sample=AllSamples)
-    output:
-        "../output/QC/ReadCountsPerSamples.tsv"
-    log:
-        "logs/CountReadsPerSample.log"
-    shell:
-        """
-        rm -f {output}.tmp
-        for f in {input}
-        do
-           ReadCount=$(awk -F'\\t' '$1~"^chr[1-9]" {{sum+=$3}} END {{print sum+0}}' $f)
-           if [ "$ReadCount" -eq 0 ]
-           then
-               echo "ERROR: $f has no reads on chromosomes matching ^chr[1-9], so bigwig normalization would be undefined. Check that this genome uses UCSC-style chromosome names." >&2
-               exit 1
-           fi
-           printf "%s\\t%s\\n" $f $ReadCount >> {output}.tmp
-        done
-        mv {output}.tmp {output}
-        """
-
 rule CountMappedBasesPerSample:
     input:
         bam="Alignments/{sample}/Aligned.sortedByCoord.out.bam"

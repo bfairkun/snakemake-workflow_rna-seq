@@ -24,8 +24,8 @@ Threshold <- as.numeric(args[4])
 library(tidyverse)
 
 dat <- read_tsv(fn_in) %>%
-    mutate(DonorPos_OneBased = ifelse(strand == "+", start+1, end-1)) %>%
-    mutate(AcceptorPos_OneBased = ifelse(strand == "+", end-1, start+1))
+    mutate(DonorPos_OneBased = as.integer(ifelse(strand == "+", start+1, end-1))) %>%
+    mutate(AcceptorPos_OneBased = as.integer(ifelse(strand == "+", end-1, start+1)))
 
 Donors <- dat %>%
     group_by(chrom, DonorPos_OneBased, strand) %>%
